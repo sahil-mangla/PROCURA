@@ -1,0 +1,141 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tokens: Ledger base theme from docs/design-decision.md section 4.1. No dark theme yet (open decision 9.1). */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ai: var(--ai);
+  --color-human: var(--human);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-public-sans), system-ui, sans-serif;
+  --font-display: var(--font-public-sans), system-ui, sans-serif;
+}
+
+:root {
+  --radius: 0.25rem;
+  --background: #e6efe8;
+  --foreground: #14233b;
+  --card: #f7fbf8;
+  --card-foreground: #14233b;
+  --popover: #f7fbf8;
+  --popover-foreground: #14233b;
+  --primary: #2a4c9b;
+  --primary-foreground: #fff;
+  --secondary: #d5e3d9;
+  --secondary-foreground: #14233b;
+  --muted: #dbe8df;
+  --muted-foreground: #4a5f63;
+  --accent: #cfe0d4;
+  --accent-foreground: #14233b;
+  --destructive: #b3342b;
+  --border: #b6cabb;
+  --input: #b6cabb;
+  --ring: #2a4c9b;
+  --ai: #2a4c9b;
+  --human: #8f5a0a;
+  --ok: #1f6b4a;
+  --warn: #a14d00;
+}
+
+:root .obsidian-dashboard-shell,
+:root .obsidian-dashboard-shell-layer {
+  --obsidian-dashboard-shell-background: rgb(228 238 231 / 0.30);
+  --obsidian-dashboard-shell-sidebar: rgb(214 230 220 / 0.55);
+  --obsidian-dashboard-shell-panel: rgb(247 251 248 / 0.7);
+  --obsidian-dashboard-shell-control: #f7fbf8;
+  --obsidian-dashboard-shell-muted: #d5e3d9;
+  --obsidian-dashboard-shell-muted-hover: #c9dbce;
+  --obsidian-dashboard-shell-border: #b6cabb;
+  --obsidian-dashboard-shell-border-strong: #9db5a3;
+  --obsidian-dashboard-shell-foreground: #14233b;
+  --obsidian-dashboard-shell-text-muted: #3f5558;
+  --obsidian-dashboard-shell-text-subtle: #5a6f70;
+  --obsidian-dashboard-shell-icon: #14233b;
+  --obsidian-dashboard-shell-accent: #2a4c9b;
+  --obsidian-dashboard-shell-accent-hover: #3a5fb5;
+  --obsidian-dashboard-shell-menu: rgb(247 251 248 / 0.92);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Backdrop: ledger-green paper with mesh light, ruled lines, grain and a pastel aurora. Procedural, ships offline. */
+.backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #e4eee7; color: #14233b; }
+.backdrop > .blob { position: absolute; border-radius: 9999px; filter: blur(90px); will-change: transform; }
+.backdrop > .b1 { width: 50vw; height: 42vw; right: -10vw; top: -16vw; background: #8fd1b9; opacity: .7; }
+.backdrop > .b2 { width: 44vw; height: 40vw; left: -12vw; bottom: -14vw; background: #efe6a6; opacity: .7; }
+.backdrop > .b3 { width: 34vw; height: 30vw; right: 14vw; bottom: 4vw; background: #a9bff0; opacity: .5; }
+.backdrop > .rules {
+  position: absolute; inset: 0; opacity: .5;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 31px, rgb(40 90 70 / .10) 31px 32px);
+  mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 80%, transparent);
+}
+.backdrop > .aurora { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: normal; opacity: .65; }
+.backdrop > .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, transparent 55%, rgb(20 60 40 / .10) 100%); }
+.backdrop > .grain {
+  position: absolute; inset: 0; opacity: .22; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+@media (prefers-reduced-motion: no-preference) {
+  .backdrop > .blob { animation: drift 38s ease-in-out infinite alternate; }
+  .backdrop > .b2 { animation-duration: 46s; animation-delay: -12s; }
+  .backdrop > .b3 { animation-duration: 52s; animation-delay: -24s; }
+}
+@keyframes drift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(3vw, 2vw, 0) scale(1.08); } }
