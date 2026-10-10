@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { Highlighter } from "@/components/motion/Highlighter";
 
 type Props = {
   /** Label and value pairs, printed in order. */
@@ -47,7 +48,10 @@ export function Receipt({ rows, highlight, reason, footer }: Props) {
             {rows.map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3">
                 <dt className="text-[#55636d]">{k}</dt>
-                <dd className={k === highlight ? "bg-[linear-gradient(transparent_45%,#f4e04d_45%)] font-bold" : ""}>{v}</dd>
+                <dd className={k === highlight ? "font-bold" : ""}>
+                  {/* The marker draws after the paper has finished feeding out (2.6 s), so only one thing moves at a time. */}
+                  {k === highlight ? <Highlighter delay={2700} color="#f4e04d" strokeWidth={1.2} iterations={1} animationDuration={500}>{v}</Highlighter> : v}
+                </dd>
               </div>
             ))}
           </dl>
