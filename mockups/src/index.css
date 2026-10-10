@@ -1,0 +1,276 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ai: var(--ai);
+  --color-human: var(--human);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-heading);
+}
+
+:root {
+  --radius: 0.5rem;
+  --font-body: "Public Sans", system-ui, sans-serif;
+  --font-heading: "Public Sans", system-ui, sans-serif;
+  --background: #f4f4f5;
+  --foreground: #18181b;
+  --card: #fff;
+  --card-foreground: #18181b;
+  --popover: #fff;
+  --popover-foreground: #18181b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #e4e4e7;
+  --secondary-foreground: #18181b;
+  --muted: #e4e4e7;
+  --muted-foreground: #52525b;
+  --accent: #e4e4e7;
+  --accent-foreground: #18181b;
+  --destructive: #dc2626;
+  --border: #d4d4d8;
+  --input: #d4d4d8;
+  --ring: #71717a;
+  --ai: #6d5bd0;
+  --human: #b7791f;
+  --ok: #15803d;
+  --warn: #b45309;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* ---------- A. Ledger: ledger-green paper, ink navy, stamp blue and red ---------- */
+.theme-ledger,
+.theme-mix {
+  --font-body: "Public Sans", system-ui, sans-serif;
+  --font-heading: "Public Sans", system-ui, sans-serif;
+  --radius: 0.25rem;
+  --background: #e6efe8;
+  --foreground: #14233b;
+  --card: #f7fbf8;
+  --card-foreground: #14233b;
+  --popover: #f7fbf8;
+  --popover-foreground: #14233b;
+  --primary: #2a4c9b;
+  --primary-foreground: #fff;
+  --secondary: #d5e3d9;
+  --secondary-foreground: #14233b;
+  --muted: #dbe8df;
+  --muted-foreground: #4a5f63;
+  --accent: #cfe0d4;
+  --accent-foreground: #14233b;
+  --destructive: #b3342b;
+  --border: #b6cabb;
+  --input: #b6cabb;
+  --ring: #2a4c9b;
+  --ai: #2a4c9b;
+  --human: #14233b;
+  --ok: #1f6b4a;
+  --warn: #a14d00;
+}
+.theme-ledger .obsidian-dashboard-shell,
+.theme-ledger .obsidian-dashboard-shell-layer,
+.theme-mix .obsidian-dashboard-shell,
+.theme-mix .obsidian-dashboard-shell-layer {
+  --obsidian-dashboard-shell-background: rgb(228 238 231 / 0.30);
+  --obsidian-dashboard-shell-sidebar: rgb(214 230 220 / 0.55);
+  --obsidian-dashboard-shell-panel: rgb(247 251 248 / 0.7);
+  --obsidian-dashboard-shell-control: #f7fbf8;
+  --obsidian-dashboard-shell-muted: #d5e3d9;
+  --obsidian-dashboard-shell-muted-hover: #c9dbce;
+  --obsidian-dashboard-shell-border: #b6cabb;
+  --obsidian-dashboard-shell-border-strong: #9db5a3;
+  --obsidian-dashboard-shell-foreground: #14233b;
+  --obsidian-dashboard-shell-text-muted: #3f5558;
+  --obsidian-dashboard-shell-text-subtle: #5a6f70;
+  --obsidian-dashboard-shell-icon: #14233b;
+  --obsidian-dashboard-shell-accent: #2a4c9b;
+  --obsidian-dashboard-shell-accent-hover: #3a5fb5;
+  --obsidian-dashboard-shell-menu: rgb(247 251 248 / 0.92);
+}
+
+/* ---------- D. Mix: Ledger tokens, people lane in dark amber (5.5:1 on the cards, far from the AI blue for all three common colour-vision types) ---------- */
+.theme-mix { --human: #8f5a0a; }
+
+/* ---------- B. Trace: slate ground, violet = AI voice, amber = human voice ---------- */
+.theme-trace {
+  --font-body: "Instrument Sans", system-ui, sans-serif;
+  --font-heading: "Bricolage Grotesque", system-ui, sans-serif;
+  --radius: 0.75rem;
+  --background: #1a2233;
+  --foreground: #e7ecf5;
+  --card: #222c42;
+  --card-foreground: #e7ecf5;
+  --popover: #222c42;
+  --popover-foreground: #e7ecf5;
+  --primary: #f3b94d;
+  --primary-foreground: #1a2233;
+  --secondary: #2c3753;
+  --secondary-foreground: #e7ecf5;
+  --muted: #2c3753;
+  --muted-foreground: #a3afc6;
+  --accent: #2c3753;
+  --accent-foreground: #e7ecf5;
+  --destructive: #ff7a7a;
+  --border: #3a4768;
+  --input: #3a4768;
+  --ring: #a99bff;
+  --ai: #a99bff;
+  --human: #f3b94d;
+  --ok: #5fd3a0;
+  --warn: #f3b94d;
+}
+
+/* ---------- C. Docket: cool desk, white paper, thermal receipt, stamp inks ---------- */
+.theme-docket {
+  --font-body: "Public Sans", system-ui, sans-serif;
+  --font-heading: "Bricolage Grotesque", system-ui, sans-serif;
+  --radius: 0.375rem;
+  --background: #d3dadf;
+  --foreground: #1f2a33;
+  --card: #fdfdfb;
+  --card-foreground: #1f2a33;
+  --popover: #fdfdfb;
+  --popover-foreground: #1f2a33;
+  --primary: #2b5fbf;
+  --primary-foreground: #fff;
+  --secondary: #e8ecee;
+  --secondary-foreground: #1f2a33;
+  --muted: #e8ecee;
+  --muted-foreground: #55636d;
+  --accent: #e8ecee;
+  --accent-foreground: #1f2a33;
+  --destructive: #d1342a;
+  --border: #c5cdd2;
+  --input: #c5cdd2;
+  --ring: #2b5fbf;
+  --ai: #2b5fbf;
+  --human: #1f2a33;
+  --ok: #1f7a4d;
+  --warn: #a8690f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Shared backdrop: mesh light, grain, texture. Procedural, so it ships offline. ---------- */
+.backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.backdrop > .blob { position: absolute; border-radius: 9999px; filter: blur(90px); will-change: transform; }
+.backdrop > .grain {
+  position: absolute; inset: 0; opacity: var(--grain-opacity, 0.12); mix-blend-mode: var(--grain-blend, overlay);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.backdrop > .dots {
+  position: absolute; inset: 0; opacity: var(--dots-opacity, 0.07);
+  background-image: radial-gradient(currentColor 1px, transparent 1.2px); background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 20%, transparent 75%);
+}
+.backdrop > .photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: var(--photo-opacity, 0.5); mix-blend-mode: var(--photo-blend, soft-light); }
+.backdrop > .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, transparent 55%, var(--vignette, rgb(0 0 0 / 0.18)) 100%); }
+
+.backdrop-trace { background: #141b2b; color: #fff; --grain-opacity: .16; --dots-opacity: .09; }
+.backdrop-trace .b1 { width: 52vw; height: 52vw; left: -14vw; top: -22vw; background: #6a56e0; opacity: .5; }
+.backdrop-trace .b2 { width: 46vw; height: 46vw; right: -12vw; bottom: -18vw; background: #e8a33a; opacity: .28; }
+.backdrop-trace .b3 { width: 40vw; height: 34vw; right: 8vw; top: 6vw; background: #2f5bd6; opacity: .32; }
+.backdrop-trace .b4 { width: 30vw; height: 30vw; left: 6vw; bottom: 8vw; background: #1f8f86; opacity: .22; }
+
+.backdrop-ledger { background: #e4eee7; color: #14233b; --grain-opacity: .22; --grain-blend: multiply; --dots-opacity: 0; --vignette: rgb(20 60 40 / .10); }
+.backdrop-ledger .b1 { width: 50vw; height: 42vw; right: -10vw; top: -16vw; background: #8fd1b9; opacity: .7; }
+.backdrop-ledger .b2 { width: 44vw; height: 40vw; left: -12vw; bottom: -14vw; background: #efe6a6; opacity: .7; }
+.backdrop-ledger .b3 { width: 34vw; height: 30vw; right: 14vw; bottom: 4vw; background: #a9bff0; opacity: .5; }
+.backdrop-ledger .rules {
+  position: absolute; inset: 0; opacity: .5;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 31px, rgb(40 90 70 / .10) 31px 32px);
+  mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 80%, transparent);
+}
+
+.backdrop-docket { background: #cfd7dd; color: #1f2a33; --grain-opacity: .30; --grain-blend: multiply; --dots-opacity: 0; --vignette: rgb(31 42 51 / .30); }
+.backdrop-docket .b1 { width: 60vw; height: 40vw; left: -10vw; top: -12vw; background: #eef3f6; opacity: .9; filter: blur(110px); }
+.backdrop-docket .b2 { width: 36vw; height: 36vw; right: -6vw; bottom: -10vw; background: #8fa6b6; opacity: .55; }
+.backdrop-docket .shaft {
+  position: absolute; top: -20vh; height: 160vh; width: 14vw; transform: rotate(24deg); filter: blur(34px);
+  background: linear-gradient(to bottom, rgb(255 255 255 / .55), rgb(255 255 255 / .05));
+}
+.backdrop-docket .s1 { left: 22vw; } .backdrop-docket .s2 { left: 42vw; width: 8vw; opacity: .8; } .backdrop-docket .s3 { left: 58vw; width: 18vw; opacity: .6; }
+
+.backdrop-launcher { background: #f6f4f1; color: #222; --grain-opacity: .14; --grain-blend: multiply; --dots-opacity: .06; --vignette: transparent; }
+.backdrop-launcher .b1 { width: 44vw; height: 40vw; left: -8vw; bottom: -12vw; background: #f2a7b3; opacity: .75; }
+.backdrop-launcher .b2 { width: 46vw; height: 40vw; right: -8vw; top: -12vw; background: #9bb4f5; opacity: .8; }
+.backdrop-launcher .b3 { width: 38vw; height: 26vw; left: 30vw; bottom: -10vw; background: #f1dc9a; opacity: .7; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .backdrop > .blob { animation: drift 38s ease-in-out infinite alternate; }
+  .backdrop > .blob.b2 { animation-duration: 46s; animation-delay: -12s; }
+  .backdrop > .blob.b3 { animation-duration: 52s; animation-delay: -24s; }
+}
+@keyframes drift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(3vw, 2vw, 0) scale(1.08); } }
+
+/* Trace: photographic base, legibility shade, soft aurora on top */
+.backdrop-trace { background: #0a1020; --photo-opacity: 0.72; --photo-blend: normal; --vignette: rgb(4 8 18 / .55); --grain-opacity: .10; }
+.backdrop-trace > .photo { object-position: 50% 40%; filter: saturate(1.05) contrast(1.02); transform: scale(1.04); }
+.backdrop-trace > .trace-shade { position: absolute; inset: 0; background: linear-gradient(to bottom, rgb(8 13 26 / .80), rgb(8 13 26 / .50) 35%, rgb(8 13 26 / .78)); }
+.backdrop-trace > .aurora { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: screen; opacity: .85; }
+
+/* Pastel aurora on the light pages: plain alpha blending, no screen mode */
+.backdrop > .aurora-soft { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: normal; opacity: .65; }

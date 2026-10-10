@@ -1,0 +1,1014 @@
+openapi: 3.1.0
+info:
+  title: Procurement backend API
+  version: 0.1.0-draft
+  description: |
+    DRAFT 2026-10-10. Owner: Backend. Consumers: Frontend (public endpoints), AI/ML service (`/internal/ai/*`).
+    Decisions referenced as D1–D19 are in CONTRACT-DECISIONS.md; states and transitions are in workflow.md.
+    The backend is authoritative: every action is re-checked on the server whatever the UI shows.
+servers:
+  - url: http://localhost:8080/api
+security:
+  - bearerAuth: []
+tags:
+  - name: auth
+  - name: reference
+    description: Users, departments, vendors, budgets
+  - name: purchase-requests
+  - name: reviews
+  - name: purchase-orders
+  - name: notifications
+  - name: audit
+  - name: internal-ai
+    description: Read-only data export for the AI service (D18). Service key only.
+
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      security: []
+      summary: Log in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accessToken, expiresIn, user]
+                properties:
+                  accessToken: { type: string }
+                  expiresIn: { type: integer, description: Seconds }
+                  user: { $ref: '#/components/schemas/CurrentUser' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Current user, role and department
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CurrentUser' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /users:
+    get:
+      tags: [reference]
+      summary: List users (ADMIN)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      items: { type: array, items: { $ref: '#/components/schemas/User' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [reference]
+      summary: Create user (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /departments:
+    get:
+      tags: [reference]
+      summary: List departments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Department' } }
+
+  /vendors:
+    get:
+      tags: [reference]
+      summary: List or search vendors
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Vendor' } }
+    post:
+      tags: [reference]
+      summary: Create vendor (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 200 }
+                email: { type: string, format: email }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Vendor' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /budgets:
+    get:
+      tags: [reference]
+      summary: Budgets by department and fiscal year
+      parameters:
+        - { name: departmentId, in: query, schema: { type: integer } }
+        - { name: fiscalYear, in: query, schema: { type: string, example: '2026-27' } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Budget' } }
+
+  /purchase-requests:
+    get:
+      tags: [purchase-requests]
+      summary: List requests visible to the current user
+      description: Filtering, search and sorting are server-side. Requesters see their own; department heads see their department; finance and admin see all.
+      parameters:
+        - { name: status, in: query, schema: { type: array, items: { $ref: '#/components/schemas/RequestStatus' } }, style: form, explode: false }
+        - { name: departmentId, in: query, schema: { type: integer } }
+        - { name: mine, in: query, schema: { type: boolean }, description: Only requests the current user created }
+        - { name: needsMyAction, in: query, schema: { type: boolean }, description: Only requests where allowedActions is not empty for the current user }
+        - { name: q, in: query, schema: { type: string }, description: 'Search ID, title, vendor' }
+        - { name: sort, in: query, schema: { type: string, enum: [submittedAt, -submittedAt, amount, -amount], default: -submittedAt } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      items: { type: array, items: { $ref: '#/components/schemas/PurchaseRequestSummary' } }
+    post:
+      tags: [purchase-requests]
+      summary: Create a draft (REQUESTER, DEPARTMENT_HEAD)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PurchaseRequestInput' }
+      responses:
+        '201':
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseRequestDetail' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+
+  /purchase-requests/{id}:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+    get:
+      tags: [purchase-requests]
+      summary: Request detail, including AI analysis, allowed actions and workflow steps
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseRequestDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [purchase-requests]
+      summary: Edit (owner, DRAFT or INFO_REQUESTED only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/PurchaseRequestInput'
+                - $ref: '#/components/schemas/VersionedAction'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseRequestDetail' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [purchase-requests]
+      summary: Delete (owner, DRAFT only)
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /purchase-requests/{id}/submit:
+    parameters: [{ $ref: '#/components/parameters/RequestId' }]
+    post:
+      tags: [purchase-requests]
+      summary: Submit or resubmit (T1, T6). Starts AI analysis asynchronously (D13).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VersionedAction' }
+      responses:
+        '200': { $ref: '#/components/responses/RequestUpdated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/RuleViolation' }
+
+  /purchase-requests/{id}/approve:
+    parameters: [{ $ref: '#/components/parameters/RequestId' }]
+    post:
+      tags: [purchase-requests]
+      summary: Department approval (T2/T3) or finance approval (T7)
+      description: The backend decides between T2 and T3. `comment` is required when the decision differs from the AI recommendation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DecisionAction' }
+      responses:
+        '200': { $ref: '#/components/responses/RequestUpdated' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/RuleViolation' }
+
+  /purchase-requests/{id}/reject:
+    parameters: [{ $ref: '#/components/parameters/RequestId' }]
+    post:
+      tags: [purchase-requests]
+      summary: Reject (T4, T8). Comment required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DecisionActionCommentRequired' }
+      responses:
+        '200': { $ref: '#/components/responses/RequestUpdated' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /purchase-requests/{id}/request-information:
+    parameters: [{ $ref: '#/components/parameters/RequestId' }]
+    post:
+      tags: [purchase-requests]
+      summary: Send back to requester (T5). Comment required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DecisionActionCommentRequired' }
+      responses:
+        '200': { $ref: '#/components/responses/RequestUpdated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /purchase-requests/{id}/purchase-order:
+    parameters: [{ $ref: '#/components/parameters/RequestId' }]
+    post:
+      tags: [purchase-requests]
+      summary: Retry PO generation after a failure (FINANCE_MANAGER, D14). Idempotent.
+      responses:
+        '200':
+          description: PO exists (created now or earlier)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseOrder' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /purchase-requests/{id}/history:
+    parameters: [{ $ref: '#/components/parameters/RequestId' }]
+    get:
+      tags: [purchase-requests]
+      summary: Immutable history, oldest first
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/HistoryEntry' } }
+
+  /purchase-requests/{id}/ai-analyses:
+    parameters: [{ $ref: '#/components/parameters/RequestId' }]
+    get:
+      tags: [purchase-requests]
+      summary: All AI analyses for this request, newest first (re-runs after resubmission are kept)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/AiAnalysis' } }
+
+  /reviews:
+    get:
+      tags: [reviews]
+      summary: Review queue (FINANCE_MANAGER)
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [OPEN, DECIDED], default: OPEN } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      items: { type: array, items: { $ref: '#/components/schemas/Review' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /reviews/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    get:
+      tags: [reviews]
+      summary: One review task
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Review' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /reviews/{id}/decision:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    post:
+      tags: [reviews]
+      summary: Record the human review decision (T9, T10, T11)
+      description: '`comment` is required for REJECT, REQUEST_INFORMATION, and any decision that differs from the AI recommendation.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/VersionedAction'
+                - type: object
+                  required: [decision]
+                  properties:
+                    decision: { $ref: '#/components/schemas/HumanDecision' }
+                    comment: { type: string, maxLength: 2000 }
+      responses:
+        '200': { $ref: '#/components/responses/RequestUpdated' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /purchase-orders:
+    get:
+      tags: [purchase-orders]
+      summary: List POs visible to the current user
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      items: { type: array, items: { $ref: '#/components/schemas/PurchaseOrder' } }
+
+  /purchase-orders/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, example: PO-2026-0007 } }
+    get:
+      tags: [purchase-orders]
+      summary: One PO
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseOrder' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /notifications:
+    get:
+      tags: [notifications]
+      summary: Current user's notifications, newest first
+      parameters:
+        - { name: unreadOnly, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      unreadCount: { type: integer }
+                      items: { type: array, items: { $ref: '#/components/schemas/Notification' } }
+
+  /notifications/{id}/read:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    post:
+      tags: [notifications]
+      summary: Mark as read
+      responses:
+        '204': { description: Marked }
+
+  /audit/ai-decisions:
+    get:
+      tags: [audit]
+      summary: AI decision audit records (FINANCE_MANAGER, ADMIN)
+      parameters:
+        - { name: override, in: query, schema: { type: boolean }, description: Only records where a human disagreed }
+        - { name: modelVersion, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      items: { type: array, items: { $ref: '#/components/schemas/AiDecisionAudit' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /ai/models:
+    get:
+      tags: [audit]
+      summary: Model versions and their evaluation metrics, for the AI analytics screen (proxied from the AI service)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  description: Same shape as ModelInfo in ai-service.yaml
+                  additionalProperties: true
+
+  /internal/ai/historical-requests:
+    get:
+      tags: [internal-ai]
+      security: [{ serviceKey: [] }]
+      summary: Historical requests for retrieval indexing and training (D18)
+      description: Only requests in a terminal state (PO_GENERATED or REJECTED). Cursor-paginated.
+      parameters:
+        - { name: updatedSince, in: query, schema: { type: string, format: date-time } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 500, maximum: 2000 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  nextCursor: { type: [string, 'null'] }
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/HistoricalRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /internal/ai/outcomes:
+    get:
+      tags: [internal-ai]
+      security: [{ serviceKey: [] }]
+      summary: Final outcomes vs AI recommendations, for the feedback dataset (D18)
+      parameters:
+        - { name: since, in: query, schema: { type: string, format: date-time } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 500, maximum: 2000 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  nextCursor: { type: [string, 'null'] }
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Outcome' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    serviceKey: { type: apiKey, in: header, name: X-Service-Key }
+
+  parameters:
+    RequestId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, pattern: '^PR-\d+$', example: PR-1042 }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+    Size:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+
+  responses:
+    RequestUpdated:
+      description: Action applied. Returns the updated request.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PurchaseRequestDetail' }
+    ValidationFailed:
+      description: VALIDATION_FAILED
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthenticated:
+      description: UNAUTHENTICATED
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: FORBIDDEN
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: NOT_FOUND
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: INVALID_TRANSITION or WORKFLOW_CONFLICT
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    RuleViolation:
+      description: BUSINESS_RULE_VIOLATION
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    # ---------- common ----------
+    Money:
+      type: number
+      multipleOf: 0.01
+      minimum: 0
+      description: Rupees, at most 2 decimals. BigDecimal in Java.
+    Currency:
+      type: string
+      enum: [INR]
+    Problem:
+      type: object
+      description: RFC 9457 problem details (D16)
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, format: uri, example: 'https://procura.local/problems/workflow-conflict' }
+        title: { type: string, example: Someone else acted on this request first }
+        status: { type: integer, example: 409 }
+        detail: { type: string, example: 'PR-1042 is now FINANCE_APPROVED. Reload to see the latest state.' }
+        code:
+          type: string
+          enum: [VALIDATION_FAILED, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, INVALID_TRANSITION, WORKFLOW_CONFLICT, BUSINESS_RULE_VIOLATION, INTERNAL_ERROR]
+        errors:
+          type: array
+          description: Field-level errors, for VALIDATION_FAILED
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string, example: 'items[0].quantity' }
+              message: { type: string, example: Must be at least 1 }
+    PageMeta:
+      type: object
+      required: [page, size, totalItems]
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalItems: { type: integer }
+    VersionedAction:
+      type: object
+      required: [version]
+      properties:
+        version: { type: integer, description: The request version the user saw (D16) }
+    DecisionAction:
+      allOf:
+        - $ref: '#/components/schemas/VersionedAction'
+        - type: object
+          properties:
+            comment: { type: string, maxLength: 2000 }
+    DecisionActionCommentRequired:
+      allOf:
+        - $ref: '#/components/schemas/VersionedAction'
+        - type: object
+          required: [comment]
+          properties:
+            comment: { type: string, minLength: 1, maxLength: 2000 }
+
+    # ---------- people & reference ----------
+    Role:
+      type: string
+      enum: [REQUESTER, DEPARTMENT_HEAD, FINANCE_MANAGER, ADMIN]
+    UserRef:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+    User:
+      type: object
+      required: [id, name, email, role, active]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        departmentId: { type: [integer, 'null'] }
+        active: { type: boolean }
+    UserInput:
+      type: object
+      required: [name, email, role, password]
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        departmentId: { type: integer }
+        password: { type: string, format: password, minLength: 8 }
+    CurrentUser:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            department: { $ref: '#/components/schemas/Department' }
+    Department:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        headUserId: { type: [integer, 'null'] }
+    Vendor:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: [string, 'null'] }
+        completedOrders: { type: integer, description: Count of PO_GENERATED requests with this vendor }
+        firstOrderAt: { type: [string, 'null'], format: date-time }
+    Budget:
+      type: object
+      required: [departmentId, fiscalYear, total, spent, committed, remaining, currency]
+      properties:
+        departmentId: { type: integer }
+        fiscalYear: { type: string, example: '2026-27' }
+        total: { $ref: '#/components/schemas/Money' }
+        spent: { $ref: '#/components/schemas/Money', description: Sum of PO_GENERATED amounts }
+        committed: { $ref: '#/components/schemas/Money', description: Sum of FINANCE_APPROVED amounts with no PO yet }
+        remaining: { $ref: '#/components/schemas/Money', description: total - spent - committed }
+        currency: { $ref: '#/components/schemas/Currency' }
+
+    # ---------- purchase requests ----------
+    RequestStatus:
+      type: string
+      enum: [DRAFT, SUBMITTED, INFO_REQUESTED, DEPARTMENT_APPROVED, HUMAN_REVIEW, FINANCE_APPROVED, PO_GENERATED, REJECTED]
+    Category:
+      type: string
+      enum: [IT_EQUIPMENT, SOFTWARE, OFFICE_FURNITURE, OFFICE_SUPPLIES, SERVICES, TRAVEL, MAINTENANCE, OTHER]
+    Priority:
+      type: string
+      enum: [LOW, NORMAL, HIGH, URGENT]
+    AllowedAction:
+      type: string
+      enum: [EDIT, DELETE, SUBMIT, APPROVE, REJECT, REQUEST_INFORMATION, REVIEW, RETRY_PO]
+    LineItem:
+      type: object
+      required: [description, quantity, unitPrice]
+      properties:
+        id: { type: integer, readOnly: true }
+        description: { type: string, maxLength: 300 }
+        quantity: { type: integer, minimum: 1 }
+        unitPrice: { $ref: '#/components/schemas/Money' }
+        lineTotal: { allOf: [{ $ref: '#/components/schemas/Money' }], readOnly: true }
+    PurchaseRequestInput:
+      type: object
+      required: [title, category, vendorId, items]
+      properties:
+        title: { type: string, maxLength: 200 }
+        description: { type: string, maxLength: 4000 }
+        category: { $ref: '#/components/schemas/Category' }
+        priority: { $ref: '#/components/schemas/Priority' }
+        vendorId: { type: integer }
+        neededBy: { type: string, format: date }
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/LineItem' }
+    PurchaseRequestSummary:
+      type: object
+      required: [id, title, status, amount, currency, requester, departmentId, departmentName, vendorName, version]
+      properties:
+        id: { type: string, example: PR-1042 }
+        title: { type: string }
+        status: { $ref: '#/components/schemas/RequestStatus' }
+        amount: { $ref: '#/components/schemas/Money', description: 'Sum of line totals, computed by the backend' }
+        currency: { $ref: '#/components/schemas/Currency' }
+        category: { $ref: '#/components/schemas/Category' }
+        priority: { $ref: '#/components/schemas/Priority' }
+        requester: { $ref: '#/components/schemas/UserRef' }
+        departmentId: { type: integer }
+        departmentName: { type: string }
+        vendorName: { type: string }
+        submittedAt: { type: [string, 'null'], format: date-time }
+        aiStatus: { $ref: '#/components/schemas/AiStatus' }
+        aiRecommendation: { oneOf: [{ $ref: '#/components/schemas/Recommendation' }, { type: 'null' }] }
+        riskLevel: { oneOf: [{ $ref: '#/components/schemas/RiskLevel' }, { type: 'null' }] }
+        version: { type: integer }
+    PurchaseRequestDetail:
+      allOf:
+        - $ref: '#/components/schemas/PurchaseRequestSummary'
+        - type: object
+          required: [items, vendor, allowedActions, workflowSteps, createdAt]
+          properties:
+            description: { type: string }
+            neededBy: { type: [string, 'null'], format: date }
+            vendor: { $ref: '#/components/schemas/Vendor' }
+            items: { type: array, items: { $ref: '#/components/schemas/LineItem' } }
+            budget: { $ref: '#/components/schemas/Budget' }
+            aiAnalysis:
+              oneOf: [{ $ref: '#/components/schemas/AiAnalysis' }, { type: 'null' }]
+              description: Latest analysis; null until aiStatus is COMPLETED
+            openReviewId: { type: [integer, 'null'] }
+            purchaseOrderId: { type: [string, 'null'] }
+            allowedActions:
+              type: array
+              description: What the current user may do now (D15). The server re-checks on every call.
+              items: { $ref: '#/components/schemas/AllowedAction' }
+            workflowSteps:
+              type: array
+              description: Progress steps to draw, computed by the backend (D15)
+              items: { $ref: '#/components/schemas/WorkflowStep' }
+            createdAt: { type: string, format: date-time }
+    WorkflowStep:
+      type: object
+      required: [key, label, state]
+      properties:
+        key: { type: string, enum: [SUBMITTED, AI_ANALYSIS, DEPARTMENT_APPROVAL, HUMAN_REVIEW, FINANCE_APPROVAL, PURCHASE_ORDER] }
+        label: { type: string, example: Department approval }
+        state: { type: string, enum: [DONE, CURRENT, PENDING, SKIPPED, FAILED] }
+        actor: { oneOf: [{ $ref: '#/components/schemas/UserRef' }, { type: 'null' }] }
+        at: { type: [string, 'null'], format: date-time }
+    HumanDecision:
+      type: string
+      enum: [APPROVE, REJECT, REQUEST_INFORMATION]
+    HistoryEntry:
+      type: object
+      description: Immutable. Never updated or deleted.
+      required: [id, at, event, actorType]
+      properties:
+        id: { type: integer }
+        at: { type: string, format: date-time }
+        event:
+          type: string
+          enum: [REQUEST_CREATED, REQUEST_SUBMITTED, AI_ANALYSIS_COMPLETED, AI_UNAVAILABLE, DEPARTMENT_APPROVED, HUMAN_REVIEW_REQUIRED, INFO_REQUESTED, REQUEST_REJECTED, FINANCE_APPROVED, PO_GENERATED, PO_GENERATION_FAILED]
+        actorType: { type: string, enum: [USER, AI, SYSTEM] }
+        actor: { oneOf: [{ $ref: '#/components/schemas/UserRef' }, { type: 'null' }] }
+        modelVersion: { type: [string, 'null'], description: Set when actorType is AI }
+        fromStatus: { oneOf: [{ $ref: '#/components/schemas/RequestStatus' }, { type: 'null' }] }
+        toStatus: { oneOf: [{ $ref: '#/components/schemas/RequestStatus' }, { type: 'null' }] }
+        decision: { oneOf: [{ $ref: '#/components/schemas/HumanDecision' }, { type: 'null' }] }
+        aiRecommendation:
+          oneOf: [{ $ref: '#/components/schemas/Recommendation' }, { type: 'null' }]
+          description: The AI recommendation in force when the human decided, so the UI can show disagreement
+        override: { type: boolean, description: True when decision differs from aiRecommendation }
+        comment: { type: [string, 'null'] }
+
+    # ---------- AI (as stored and exposed by the backend) ----------
+    AiStatus:
+      type: string
+      enum: [NOT_STARTED, PENDING, COMPLETED, UNAVAILABLE]
+    Recommendation:
+      type: string
+      enum: [APPROVE, REJECT]
+    RiskLevel:
+      type: string
+      enum: [LOW, MEDIUM, HIGH]
+    AiAnalysis:
+      type: object
+      description: |
+        The AI service's Recommendation (ai-service.yaml), stored unchanged, plus backend metadata.
+        Never updated after it is stored.
+      required: [id, requestId, recommendation, confidence, riskLevel, requiresHumanReview, reviewThreshold, reasons, reviewTriggers, evidence, modelVersion, agentVersions, analysedAt]
+      properties:
+        id: { type: integer }
+        requestId: { type: string }
+        recommendation: { $ref: '#/components/schemas/Recommendation' }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        riskLevel: { $ref: '#/components/schemas/RiskLevel' }
+        requiresHumanReview: { type: boolean }
+        reviewThreshold: { type: number, minimum: 0, maximum: 1 }
+        reasons: { type: array, items: { $ref: '#/components/schemas/Reason' } }
+        reviewTriggers: { type: array, items: { $ref: '#/components/schemas/ReviewTrigger' } }
+        evidence: { type: array, items: { $ref: '#/components/schemas/Evidence' } }
+        modelVersion: { type: string, example: approval-model-v2 }
+        agentVersions:
+          type: object
+          required: [budget, historical, risk]
+          properties:
+            budget: { type: string }
+            historical: { type: string }
+            risk: { type: string }
+        analysedAt: { type: string, format: date-time }
+        evidenceRejected: { type: boolean, description: True if the backend dropped evidence IDs it could not find (D7) }
+    Reason:
+      type: object
+      required: [code, text, tone]
+      properties:
+        code: { type: string, example: WITHIN_BUDGET }
+        text: { type: string, example: Within remaining department budget }
+        tone: { type: string, enum: [SUPPORTS, CONCERN] }
+        evidenceIds: { type: array, items: { type: string } }
+    ReviewTrigger:
+      type: object
+      required: [code, text, source]
+      properties:
+        code:
+          type: string
+          description: AI codes are listed in ai-service.yaml. RULE codes are HIGH_VALUE, BUDGET_EXCEEDED, POLICY_EXCEPTION, AI_UNAVAILABLE.
+          example: LOW_CONFIDENCE
+        text: { type: string, example: 'Confidence is 67%, below the 80% threshold' }
+        source: { type: string, enum: [AI, RULE] }
+    Evidence:
+      type: object
+      required: [requestId, summary, amount, outcome, similarity]
+      properties:
+        requestId: { type: string, example: REQ-421 }
+        summary: { type: string, example: 'Standing desks, 12 units' }
+        amount: { $ref: '#/components/schemas/Money' }
+        outcome: { type: string, enum: [APPROVED, REJECTED] }
+        similarity: { type: number, minimum: 0, maximum: 1 }
+
+    # ---------- reviews, POs, notifications, audit ----------
+    Review:
+      type: object
+      required: [id, requestId, status, triggers, createdAt]
+      properties:
+        id: { type: integer }
+        requestId: { type: string }
+        requestTitle: { type: string }
+        amount: { $ref: '#/components/schemas/Money' }
+        status: { type: string, enum: [OPEN, DECIDED] }
+        triggers:
+          type: array
+          description: AI triggers plus backend rule triggers
+          items: { $ref: '#/components/schemas/ReviewTrigger' }
+        aiRecommendation: { oneOf: [{ $ref: '#/components/schemas/Recommendation' }, { type: 'null' }] }
+        aiConfidence: { type: [number, 'null'] }
+        createdAt: { type: string, format: date-time }
+        decision: { oneOf: [{ $ref: '#/components/schemas/HumanDecision' }, { type: 'null' }] }
+        decidedBy: { oneOf: [{ $ref: '#/components/schemas/UserRef' }, { type: 'null' }] }
+        decidedAt: { type: [string, 'null'], format: date-time }
+        override: { type: [boolean, 'null'] }
+        comment: { type: [string, 'null'] }
+    PurchaseOrder:
+      type: object
+      required: [id, purchaseRequestId, vendor, items, total, currency, issuedAt]
+      properties:
+        id: { type: string, example: PO-2026-0007 }
+        purchaseRequestId: { type: string }
+        vendor: { $ref: '#/components/schemas/Vendor' }
+        departmentName: { type: string }
+        items: { type: array, items: { $ref: '#/components/schemas/LineItem' } }
+        total: { $ref: '#/components/schemas/Money' }
+        currency: { $ref: '#/components/schemas/Currency' }
+        issuedAt: { type: string, format: date-time }
+        approvedBy: { type: array, items: { $ref: '#/components/schemas/UserRef' } }
+    Notification:
+      type: object
+      required: [id, event, requestId, message, read, createdAt]
+      properties:
+        id: { type: integer }
+        event: { type: string, description: Same values as HistoryEntry.event }
+        requestId: { type: string }
+        message: { type: string, example: 'PR-1042 approved by Finance. The AI recommended rejection.' }
+        override: { type: boolean }
+        aiRecommendation: { oneOf: [{ $ref: '#/components/schemas/Recommendation' }, { type: 'null' }] }
+        humanDecision: { oneOf: [{ $ref: '#/components/schemas/HumanDecision' }, { type: 'null' }] }
+        read: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    AiDecisionAudit:
+      type: object
+      description: ML doc section 12. One row per AI analysis, joined with the final human decision if any.
+      required: [analysis, requestId]
+      properties:
+        requestId: { type: string }
+        analysis: { $ref: '#/components/schemas/AiAnalysis' }
+        humanDecision: { oneOf: [{ $ref: '#/components/schemas/HumanDecision' }, { type: 'null' }] }
+        decidedBy: { oneOf: [{ $ref: '#/components/schemas/UserRef' }, { type: 'null' }] }
+        decidedAt: { type: [string, 'null'], format: date-time }
+        override: { type: [boolean, 'null'] }
+        overrideReason: { type: [string, 'null'] }
+
+    # ---------- internal export for the AI service ----------
+    HistoricalRequest:
+      type: object
+      description: |
+        A finished request as training/retrieval data. Contains no information about the final
+        human decision except `outcome`, which is the label. Do not use outcome-derived fields as features (ML doc section 4).
+      required: [requestId, departmentId, category, amount, currency, vendorId, submittedAt, outcome]
+      properties:
+        requestId: { type: string }
+        title: { type: string }
+        description: { type: string }
+        departmentId: { type: integer }
+        category: { $ref: '#/components/schemas/Category' }
+        priority: { $ref: '#/components/schemas/Priority' }
+        amount: { $ref: '#/components/schemas/Money' }
+        currency: { $ref: '#/components/schemas/Currency' }
+        vendorId: { type: integer }
+        itemCount: { type: integer }
+        submittedAt: { type: string, format: date-time }
+        budgetTotalAtSubmit: { $ref: '#/components/schemas/Money' }
+        budgetRemainingAtSubmit: { $ref: '#/components/schemas/Money', description: 'Snapshot at submit time, to avoid leaking later spend' }
+        outcome: { type: string, enum: [APPROVED, REJECTED], description: APPROVED means PO_GENERATED }
+        rejectedAtStage: { type: [string, 'null'], enum: [DEPARTMENT, FINANCE, REVIEW, null] }
+        updatedAt: { type: string, format: date-time }
+    Outcome:
+      type: object
+      required: [requestId, analysisId, aiRecommendation, finalOutcome, override, decidedAt]
+      properties:
+        requestId: { type: string }
+        analysisId: { type: integer }
+        modelVersion: { type: string }
+        aiRecommendation: { $ref: '#/components/schemas/Recommendation' }
+        aiConfidence: { type: number }
+        finalOutcome: { type: string, enum: [APPROVED, REJECTED] }
+        override: { type: boolean }
+        overrideReason: { type: [string, 'null'] }
+        decidedAt: { type: string, format: date-time }

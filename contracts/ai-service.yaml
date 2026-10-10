@@ -1,0 +1,238 @@
+openapi: 3.1.0
+info:
+  title: AI/ML recommendation service API
+  version: 0.1.0-draft
+  description: |
+    DRAFT 2026-10-10. Owner: AI/ML. Consumer: Backend (Java). The browser never calls this service.
+
+    The service recommends. It never changes workflow state, never authorises, never evaluates hard
+    policy rules (D9). Its output is stored unchanged by the backend as an AiAnalysis.
+
+    Breaking changes go to /v2. Additive optional fields may be added to /v1 at any time, so the
+    backend must ignore unknown fields.
+servers:
+  - url: http://localhost:8000
+security:
+  - serviceKey: []
+
+paths:
+  /v1/analyses:
+    post:
+      summary: Analyse one purchase request and return a recommendation
+      description: |
+        Called by the backend after a request is submitted (D13). Backend timeout 15 s, one retry.
+        Must be safe to call twice for the same request (no side effects besides logging).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnalysisInput' }
+      responses:
+        '200':
+          description: Recommendation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recommendation' }
+        '400':
+          description: Input invalid
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '401':
+          description: Missing or wrong service key
+        '503':
+          description: Model not loaded or dependency down. Backend treats as AI_UNAVAILABLE (D12).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  /v1/models:
+    get:
+      summary: All model versions with their evaluation metrics (ML doc section 14)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/ModelInfo' } }
+
+  /health:
+    get:
+      summary: Liveness and the model currently serving
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, modelVersion]
+                properties:
+                  status: { type: string, enum: [UP, DEGRADED] }
+                  modelVersion: { type: string }
+                  indexUpdatedAt: { type: [string, 'null'], format: date-time, description: Last sync of historical requests }
+
+components:
+  securitySchemes:
+    serviceKey: { type: apiKey, in: header, name: X-Service-Key }
+
+  schemas:
+    Money:
+      type: number
+      multipleOf: 0.01
+      minimum: 0
+
+    AnalysisInput:
+      type: object
+      description: |
+        Everything the backend knows at submit time. Historical statistics (department averages,
+        vendor history, similar cases) are computed by the AI service from its synced copy of
+        GET /internal/ai/historical-requests, not sent here.
+      required: [requestId, departmentId, amount, currency, category, vendorId, budgetTotal, budgetRemaining, submittedAt, items]
+      properties:
+        requestId: { type: string, example: PR-1024 }
+        departmentId: { type: integer, example: 12 }
+        amount: { $ref: '#/components/schemas/Money', example: 85000 }
+        currency: { type: string, enum: [INR] }
+        category: { type: string, example: IT_EQUIPMENT, description: Same enum as Category in openapi.yaml }
+        priority: { type: string, enum: [LOW, NORMAL, HIGH, URGENT] }
+        vendorId: { type: integer, example: 41 }
+        budgetTotal: { $ref: '#/components/schemas/Money', example: 600000 }
+        budgetRemaining: { $ref: '#/components/schemas/Money', example: 140000 }
+        title: { type: string }
+        requestDescription: { type: string, example: Laptops for development team }
+        submittedAt: { type: string, format: date-time }
+        items:
+          type: array
+          items:
+            type: object
+            required: [description, quantity, unitPrice]
+            properties:
+              description: { type: string }
+              quantity: { type: integer }
+              unitPrice: { $ref: '#/components/schemas/Money' }
+
+    Recommendation:
+      type: object
+      description: The integration contract (ML doc section 9, amended by D1–D8).
+      required: [requestId, recommendation, confidence, riskLevel, requiresHumanReview, reviewThreshold, reasons, reviewTriggers, evidence, modelVersion, agentVersions, analysedAt]
+      properties:
+        requestId: { type: string }
+        recommendation: { type: string, enum: [APPROVE, REJECT], description: 'D3: no REVIEW value; escalation is requiresHumanReview' }
+        confidence: { type: number, minimum: 0, maximum: 1, description: Model certainty in the recommendation. Not authorisation. }
+        riskLevel: { type: string, enum: [LOW, MEDIUM, HIGH] }
+        requiresHumanReview: { type: boolean, description: True if reviewTriggers is not empty }
+        reviewThreshold: { type: number, minimum: 0, maximum: 1, default: 0.8, description: Confidence threshold in force for this call (D2) }
+        reasons:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/Reason' }
+        reviewTriggers:
+          type: array
+          items: { $ref: '#/components/schemas/ReviewTrigger' }
+        evidence:
+          type: array
+          description: Similar historical cases that actually informed the result. Every requestId must exist in the backend export (D7).
+          items: { $ref: '#/components/schemas/Evidence' }
+        modelVersion: { type: string, example: approval-model-v2 }
+        agentVersions:
+          type: object
+          required: [budget, historical, risk]
+          properties:
+            budget: { type: string, example: v1 }
+            historical: { type: string, example: v1 }
+            risk: { type: string, example: v1 }
+        analysedAt: { type: string, format: date-time }
+      example:
+        requestId: PR-1024
+        recommendation: APPROVE
+        confidence: 0.67
+        riskLevel: MEDIUM
+        requiresHumanReview: true
+        reviewThreshold: 0.8
+        reasons:
+          - { code: WITHIN_BUDGET, text: Within remaining department budget, tone: SUPPORTS, evidenceIds: [] }
+          - { code: SIMILAR_MOSTLY_APPROVED, text: Similar requests were mostly approved, tone: SUPPORTS, evidenceIds: [REQ-421, REQ-387] }
+          - { code: AMOUNT_ABOVE_AVERAGE, text: Request is 2.3x the department's historical average, tone: CONCERN, evidenceIds: [] }
+          - { code: VENDOR_UNFAMILIAR, text: New vendor with no prior orders, tone: CONCERN, evidenceIds: [] }
+        reviewTriggers:
+          - { code: LOW_CONFIDENCE, text: 'Confidence is 67%, below the 80% threshold' }
+          - { code: UNFAMILIAR_VENDOR, text: Vendor has no completed orders }
+        evidence:
+          - { requestId: REQ-421, summary: 'Laptops, 10 units', amount: 78000, outcome: APPROVED, similarity: 0.88 }
+          - { requestId: REQ-387, summary: 'Laptops, 12 units', amount: 92000, outcome: APPROVED, similarity: 0.84 }
+          - { requestId: REQ-352, summary: 'Workstations, 8 units', amount: 81000, outcome: REJECTED, similarity: 0.71 }
+        modelVersion: approval-model-v2
+        agentVersions: { budget: v1, historical: v1, risk: v1 }
+        analysedAt: '2026-10-06T10:13:00+05:30'
+
+    Reason:
+      type: object
+      required: [code, text, tone]
+      properties:
+        code:
+          type: string
+          description: |
+            Stable machine value. Each code must map to a real feature or retrieved evidence (ML doc section 11).
+            Initial list: WITHIN_BUDGET, EXCEEDS_REMAINING_BUDGET, HIGH_BUDGET_UTILISATION, PAST_BUDGET_OVERRUNS,
+            SIMILAR_MOSTLY_APPROVED, SIMILAR_MOSTLY_REJECTED, AMOUNT_TYPICAL, AMOUNT_ABOVE_AVERAGE,
+            VENDOR_ESTABLISHED, VENDOR_UNFAMILIAR, UNUSUAL_FREQUENCY. New codes are an additive change.
+        text: { type: string }
+        tone: { type: string, enum: [SUPPORTS, CONCERN] }
+        evidenceIds: { type: array, items: { type: string } }
+
+    ReviewTrigger:
+      type: object
+      required: [code, text]
+      properties:
+        code:
+          type: string
+          enum: [LOW_CONFIDENCE, AMOUNT_ANOMALY, UNFAMILIAR_VENDOR, BUDGET_PRESSURE, UNUSUAL_FREQUENCY, INSUFFICIENT_HISTORY]
+        text: { type: string }
+
+    Evidence:
+      type: object
+      required: [requestId, summary, amount, outcome, similarity]
+      properties:
+        requestId: { type: string }
+        summary: { type: string }
+        amount: { $ref: '#/components/schemas/Money' }
+        outcome: { type: string, enum: [APPROVED, REJECTED] }
+        similarity: { type: number, minimum: 0, maximum: 1 }
+
+    ModelInfo:
+      type: object
+      required: [version, status, trainedAt, metrics]
+      properties:
+        version: { type: string, example: approval-model-v2 }
+        algorithm: { type: string, example: logistic_regression }
+        status: { type: string, enum: [SERVING, CANDIDATE, RETIRED] }
+        trainedAt: { type: string, format: date-time }
+        trainingRows: { type: integer }
+        metrics:
+          type: object
+          description: ML doc section 5, on the held-out test set
+          properties:
+            accuracy: { type: number }
+            precision: { type: number }
+            recall: { type: number }
+            f1: { type: number }
+            rocAuc: { type: number }
+            brierScore: { type: number, description: Calibration }
+            confusionMatrix:
+              type: object
+              properties:
+                tp: { type: integer }
+                fp: { type: integer }
+                tn: { type: integer }
+                fn: { type: integer }
+
+    Problem:
+      type: object
+      required: [title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
