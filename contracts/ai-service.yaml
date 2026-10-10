@@ -18,6 +18,7 @@ security:
 paths:
   /v1/analyses:
     post:
+      operationId: createAnalysis
       summary: Analyse one purchase request and return a recommendation
       description: |
         Called by the backend after a request is submitted (D13). Backend timeout 15 s, one retry.
@@ -48,6 +49,7 @@ paths:
 
   /v1/models:
     get:
+      operationId: listModelVersions
       summary: All model versions with their evaluation metrics (ML doc section 14)
       responses:
         '200':
@@ -58,6 +60,7 @@ paths:
 
   /health:
     get:
+      operationId: health
       summary: Liveness and the model currently serving
       security: []
       responses:

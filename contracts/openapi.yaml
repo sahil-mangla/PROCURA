@@ -25,6 +25,7 @@ tags:
 paths:
   /auth/login:
     post:
+      operationId: login
       tags: [auth]
       security: []
       summary: Log in
@@ -54,6 +55,7 @@ paths:
 
   /auth/me:
     get:
+      operationId: getCurrentUser
       tags: [auth]
       summary: Current user, role and department
       responses:
@@ -66,6 +68,7 @@ paths:
 
   /users:
     get:
+      operationId: listUsers
       tags: [reference]
       summary: List users (ADMIN)
       parameters:
@@ -84,6 +87,7 @@ paths:
                       items: { type: array, items: { $ref: '#/components/schemas/User' } }
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
+      operationId: createUser
       tags: [reference]
       summary: Create user (ADMIN)
       requestBody:
@@ -102,6 +106,7 @@ paths:
 
   /departments:
     get:
+      operationId: listDepartments
       tags: [reference]
       summary: List departments
       responses:
@@ -113,6 +118,7 @@ paths:
 
   /vendors:
     get:
+      operationId: listVendors
       tags: [reference]
       summary: List or search vendors
       parameters:
@@ -124,6 +130,7 @@ paths:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/Vendor' } }
     post:
+      operationId: createVendor
       tags: [reference]
       summary: Create vendor (ADMIN)
       requestBody:
@@ -146,6 +153,7 @@ paths:
 
   /budgets:
     get:
+      operationId: listBudgets
       tags: [reference]
       summary: Budgets by department and fiscal year
       parameters:
@@ -160,6 +168,7 @@ paths:
 
   /purchase-requests:
     get:
+      operationId: listPurchaseRequests
       tags: [purchase-requests]
       summary: List requests visible to the current user
       description: Filtering, search and sorting are server-side. Requesters see their own; department heads see their department; finance and admin see all.
@@ -184,6 +193,7 @@ paths:
                     properties:
                       items: { type: array, items: { $ref: '#/components/schemas/PurchaseRequestSummary' } }
     post:
+      operationId: createPurchaseRequest
       tags: [purchase-requests]
       summary: Create a draft (REQUESTER, DEPARTMENT_HEAD)
       requestBody:
@@ -203,6 +213,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/RequestId'
     get:
+      operationId: getPurchaseRequest
       tags: [purchase-requests]
       summary: Request detail, including AI analysis, allowed actions and workflow steps
       responses:
@@ -214,6 +225,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
     put:
+      operationId: updatePurchaseRequest
       tags: [purchase-requests]
       summary: Edit (owner, DRAFT or INFO_REQUESTED only)
       requestBody:
@@ -234,6 +246,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
     delete:
+      operationId: deletePurchaseRequest
       tags: [purchase-requests]
       summary: Delete (owner, DRAFT only)
       responses:
@@ -244,6 +257,7 @@ paths:
   /purchase-requests/{id}/submit:
     parameters: [{ $ref: '#/components/parameters/RequestId' }]
     post:
+      operationId: submitPurchaseRequest
       tags: [purchase-requests]
       summary: Submit or resubmit (T1, T6). Starts AI analysis asynchronously (D13).
       requestBody:
@@ -260,6 +274,7 @@ paths:
   /purchase-requests/{id}/approve:
     parameters: [{ $ref: '#/components/parameters/RequestId' }]
     post:
+      operationId: approvePurchaseRequest
       tags: [purchase-requests]
       summary: Department approval (T2/T3) or finance approval (T7)
       description: The backend decides between T2 and T3. `comment` is required when the decision differs from the AI recommendation.
@@ -278,6 +293,7 @@ paths:
   /purchase-requests/{id}/reject:
     parameters: [{ $ref: '#/components/parameters/RequestId' }]
     post:
+      operationId: rejectPurchaseRequest
       tags: [purchase-requests]
       summary: Reject (T4, T8). Comment required.
       requestBody:
@@ -294,6 +310,7 @@ paths:
   /purchase-requests/{id}/request-information:
     parameters: [{ $ref: '#/components/parameters/RequestId' }]
     post:
+      operationId: requestInformation
       tags: [purchase-requests]
       summary: Send back to requester (T5). Comment required.
       requestBody:
@@ -309,6 +326,7 @@ paths:
   /purchase-requests/{id}/purchase-order:
     parameters: [{ $ref: '#/components/parameters/RequestId' }]
     post:
+      operationId: retryPurchaseOrder
       tags: [purchase-requests]
       summary: Retry PO generation after a failure (FINANCE_MANAGER, D14). Idempotent.
       responses:
@@ -323,6 +341,7 @@ paths:
   /purchase-requests/{id}/history:
     parameters: [{ $ref: '#/components/parameters/RequestId' }]
     get:
+      operationId: getRequestHistory
       tags: [purchase-requests]
       summary: Immutable history, oldest first
       responses:
@@ -335,6 +354,7 @@ paths:
   /purchase-requests/{id}/ai-analyses:
     parameters: [{ $ref: '#/components/parameters/RequestId' }]
     get:
+      operationId: listAiAnalyses
       tags: [purchase-requests]
       summary: All AI analyses for this request, newest first (re-runs after resubmission are kept)
       responses:
@@ -346,6 +366,7 @@ paths:
 
   /reviews:
     get:
+      operationId: listReviews
       tags: [reviews]
       summary: Review queue (FINANCE_MANAGER)
       parameters:
@@ -369,6 +390,7 @@ paths:
     parameters:
       - { name: id, in: path, required: true, schema: { type: integer } }
     get:
+      operationId: getReview
       tags: [reviews]
       summary: One review task
       responses:
@@ -383,6 +405,7 @@ paths:
     parameters:
       - { name: id, in: path, required: true, schema: { type: integer } }
     post:
+      operationId: decideReview
       tags: [reviews]
       summary: Record the human review decision (T9, T10, T11)
       description: '`comment` is required for REJECT, REQUEST_INFORMATION, and any decision that differs from the AI recommendation.'
@@ -406,6 +429,7 @@ paths:
 
   /purchase-orders:
     get:
+      operationId: listPurchaseOrders
       tags: [purchase-orders]
       summary: List POs visible to the current user
       parameters:
@@ -427,6 +451,7 @@ paths:
     parameters:
       - { name: id, in: path, required: true, schema: { type: string, example: PO-2026-0007 } }
     get:
+      operationId: getPurchaseOrder
       tags: [purchase-orders]
       summary: One PO
       responses:
@@ -439,6 +464,7 @@ paths:
 
   /notifications:
     get:
+      operationId: listNotifications
       tags: [notifications]
       summary: Current user's notifications, newest first
       parameters:
@@ -462,6 +488,7 @@ paths:
     parameters:
       - { name: id, in: path, required: true, schema: { type: integer } }
     post:
+      operationId: markNotificationRead
       tags: [notifications]
       summary: Mark as read
       responses:
@@ -469,6 +496,7 @@ paths:
 
   /audit/ai-decisions:
     get:
+      operationId: listAiDecisionAudits
       tags: [audit]
       summary: AI decision audit records (FINANCE_MANAGER, ADMIN)
       parameters:
@@ -493,6 +521,7 @@ paths:
 
   /ai/models:
     get:
+      operationId: listModels
       tags: [audit]
       summary: Model versions and their evaluation metrics, for the AI analytics screen (proxied from the AI service)
       responses:
@@ -509,6 +538,7 @@ paths:
 
   /internal/ai/historical-requests:
     get:
+      operationId: exportHistoricalRequests
       tags: [internal-ai]
       security: [{ serviceKey: [] }]
       summary: Historical requests for retrieval indexing and training (D18)
@@ -534,6 +564,7 @@ paths:
 
   /internal/ai/outcomes:
     get:
+      operationId: exportOutcomes
       tags: [internal-ai]
       security: [{ serviceKey: [] }]
       summary: Final outcomes vs AI recommendations, for the feedback dataset (D18)
