@@ -50,3 +50,7 @@ export const decisionLabel: Record<HumanDecision, string> = {
 
 /** Turns an enum such as OFFICE_FURNITURE into "Office furniture". */
 export const humanize = (value: string) => value.charAt(0) + value.slice(1).toLowerCase().replaceAll("_", " ");
+
+const categoryLabels: Record<string, string> = { IT_EQUIPMENT: "IT equipment" };
+/** Category names for display; plain humanize would turn "IT" into "It". */
+export const categoryLabel = (c: string) => categoryLabels[c] ?? humanize(c);

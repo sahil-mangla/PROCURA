@@ -37,11 +37,14 @@ src/
   app/
     login/                    sign in (Server Action)
     (app)/requests/           list, filter, search (server-side)
+    (app)/requests/new/       create a request (save draft or submit)
     (app)/requests/[id]/      request detail: AI panel, timeline, decision panel
+    (app)/requests/[id]/edit/ edit a DRAFT or INFO_REQUESTED request
     (app)/reviews/            finance review queue
   components/
     shell/                    ObsidianUI DashboardShell (MIT), AppShell, user menu
     review/                   DecisionPanel, Timeline, AiPanel, HoldToConfirm, Receipt, Toast
+    request/                  RequestForm (create and edit)
     motion/                   WordByWord, Typewriter, Pct, SoftAurora (Rewamp UI, MIT)
     ledger.tsx                Section, Row, Stepper, StatusPill
   lib/
@@ -53,4 +56,4 @@ src/
 
 ## Not built yet
 
-Request creation and editing, dashboards per role, notifications, purchase orders, budgets, AI analytics, admin screens. Design doc section 6 lists these.
+Dashboards per role, notifications, purchase orders, budgets, AI analytics, admin screens. Design doc section 6 lists these.

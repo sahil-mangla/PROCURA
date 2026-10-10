@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Pct } from "@/components/motion/Pct";
@@ -10,7 +12,7 @@ import { Timeline } from "@/components/review/Timeline";
 import { api, unwrap } from "@/lib/api/server";
 import type { PurchaseRequestDetail, ReviewTrigger } from "@/lib/api/types";
 import { getCurrentUser } from "@/lib/auth";
-import { date, humanize, inr, pct, roleLabel } from "@/lib/format";
+import { date, humanize, inr, pct, roleLabel, categoryLabel } from "@/lib/format";
 
 export async function generateMetadata({ params }: PageProps<"/requests/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -31,7 +33,7 @@ function idleText(r: PurchaseRequestDetail): string {
   }
 }
 
-export default async function RequestDetailPage({ params }: PageProps<"/requests/[id]">) {
+export default async function RequestDetailPage({ params, searchParams }: PageProps<"/requests/[id]">) {
   const id = decodeURIComponent((await params).id);
   const client = await api();
   const path = { params: { path: { id } } };
@@ -52,6 +54,10 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
 
   return (
     <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
+      <Suspense>
+        <Notice searchParams={searchParams} />
+      </Suspense>
+
       {/* Hero band */}
       <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-md sm:p-8 xl:col-span-2" aria-label="Request summary">
         <div aria-hidden className="pointer-events-none absolute -top-28 -right-20 size-80 rounded-full bg-[#8fd1b9]/70 blur-3xl" />
@@ -65,6 +71,11 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
         <div className="relative mt-5 flex flex-wrap items-center gap-3">
           <StatusPill status={request.status} className="px-3 py-1" />
           <span className="text-2xl font-semibold tracking-tight tnum">{inr(request.amount)}</span>
+          {request.allowedActions.includes("EDIT") && (
+            <Link href={`/requests/${encodeURIComponent(request.id)}/edit`} className="rounded-full border border-foreground/15 bg-card/70 px-3 py-1 text-xs font-semibold">
+              Edit request
+            </Link>
+          )}
         </div>
       </section>
 
@@ -77,7 +88,7 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
               {request.requester.role ? `, ${roleLabel[request.requester.role]}` : ""}
             </Row>
             <Row label="Department">{request.departmentName}</Row>
-            {request.category && <Row label="Category">{humanize(request.category)}</Row>}
+            {request.category && <Row label="Category">{categoryLabel(request.category)}</Row>}
             {request.priority && <Row label="Priority">{humanize(request.priority)}</Row>}
             <Row label="Vendor">
               <span className="inline-flex flex-wrap items-center gap-2">
@@ -173,5 +184,17 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
         )}
       </aside>
     </div>
+  );
+}
+
+/** A message passed back from a form action, such as "saved as a draft but could not be submitted". */
+async function Notice({ searchParams }: { searchParams: PageProps<"/requests/[id]">["searchParams"] }) {
+  const n = (await searchParams).notice;
+  const text = Array.isArray(n) ? n[0] : n;
+  if (!text) return null;
+  return (
+    <p role="status" className="rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm xl:col-span-2">
+      {text}
+    </p>
   );
 }

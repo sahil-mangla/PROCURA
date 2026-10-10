@@ -23,3 +23,7 @@ export type Review = S["Review"];
 export type Budget = S["Budget"];
 export type LineItem = S["LineItem"];
 export type Problem = S["Problem"];
+export type Category = S["Category"];
+export type Priority = S["Priority"];
+export type Vendor = S["Vendor"];
+export type PurchaseRequestInput = S["PurchaseRequestInput"];

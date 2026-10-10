@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bot, Search } from "lucide-react";
+import { Bot, Plus, Search } from "lucide-react";
 import { panel, StatusPill } from "@/components/ledger";
 import { api, unwrap } from "@/lib/api/server";
 import type { RequestStatus } from "@/lib/api/types";
-import { date, humanize, inr, riskTone } from "@/lib/format";
+import { date, humanize, inr, riskTone, categoryLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Requests" };
@@ -62,12 +62,17 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
             </Link>
           ))}
         </nav>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <form role="search" action="/requests" className="relative w-full lg:w-80">
           {filterIndex > 0 && <input type="hidden" name="filter" value={filter.label} />}
           <label htmlFor="q" className="sr-only">Search requests</label>
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <input id="q" name="q" defaultValue={q} placeholder="Search ID, title or vendor" className="w-full rounded-full border border-input bg-card/90 py-2 pr-3 pl-9 text-sm" />
         </form>
+        <Link href="/requests/new" className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+          <Plus className="size-4" aria-hidden /> New request
+        </Link>
+        </div>
       </div>
 
       <section className={panel} aria-label="Requests">
@@ -85,7 +90,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                     <span className="block truncate font-semibold tracking-tight">{r.title}</span>
                     <span className="block truncate text-xs text-muted-foreground">
                       <span className="tnum">{r.id}</span>, {r.departmentName}, {r.vendorName}
-                      {r.category ? `, ${humanize(r.category)}` : ""}
+                      {r.category ? `, ${categoryLabel(r.category)}` : ""}
                       {r.submittedAt ? `, submitted ${date(r.submittedAt)}` : ""}
                     </span>
                   </span>
