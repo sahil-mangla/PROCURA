@@ -49,7 +49,7 @@ paths:
                 required: [accessToken, expiresIn, user]
                 properties:
                   accessToken: { type: string }
-                  expiresIn: { type: integer, description: Seconds }
+                  expiresIn: { type: integer, minimum: 60, maximum: 86400, description: Seconds until the access token expires }
                   user: { $ref: '#/components/schemas/CurrentUser' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
 
@@ -648,9 +648,8 @@ components:
     # ---------- common ----------
     Money:
       type: number
-      multipleOf: 0.01
       minimum: 0
-      description: Rupees, at most 2 decimals. BigDecimal in Java.
+      description: 'Rupees, at most 2 decimal places (BigDecimal in Java). Not expressed as multipleOf: 0.01, which fails on binary floating point.'
     Currency:
       type: string
       enum: [INR]
@@ -805,7 +804,7 @@ components:
       type: object
       required: [id, title, status, amount, currency, requester, departmentId, departmentName, vendorName, version]
       properties:
-        id: { type: string, example: PR-1042 }
+        id: { type: string, pattern: '^PR-\d{4,6}$', example: PR-1042 }
         title: { type: string }
         status: { $ref: '#/components/schemas/RequestStatus' }
         amount: { $ref: '#/components/schemas/Money', description: 'Sum of line totals, computed by the backend' }
@@ -871,6 +870,7 @@ components:
         actorType: { type: string, enum: [USER, AI, SYSTEM] }
         actor: { oneOf: [{ $ref: '#/components/schemas/UserRef' }, { type: 'null' }] }
         modelVersion: { type: [string, 'null'], description: Set when actorType is AI }
+        analysisId: { type: [integer, 'null'], description: 'Set when actorType is AI: the AiAnalysis this entry records' }
         fromStatus: { oneOf: [{ $ref: '#/components/schemas/RequestStatus' }, { type: 'null' }] }
         toStatus: { oneOf: [{ $ref: '#/components/schemas/RequestStatus' }, { type: 'null' }] }
         decision: { oneOf: [{ $ref: '#/components/schemas/HumanDecision' }, { type: 'null' }] }
