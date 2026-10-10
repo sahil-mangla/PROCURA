@@ -83,8 +83,8 @@ components:
   schemas:
     Money:
       type: number
+      multipleOf: 0.01
       minimum: 0
-      description: Rupees, at most 2 decimal places.
 
     AnalysisInput:
       type: object

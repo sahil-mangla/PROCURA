@@ -37,5 +37,3 @@ npx @stoplight/prism-cli mock contracts/openapi.yaml
 ## Changelog
 
 - 2026-10-10: first draft.
-- 2026-10-10: `HistoryEntry.analysisId` (optional) so the UI can show the exact analysis behind an AI history row.
-- 2026-10-10: `expiresIn` bounded to 60–86400 s; money fields drop `multipleOf: 0.01` (floating-point false failures); request `id` carries the `PR-` pattern.
