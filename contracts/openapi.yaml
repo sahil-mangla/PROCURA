@@ -157,7 +157,7 @@ paths:
       tags: [reference]
       summary: Budgets by department and fiscal year
       parameters:
-        - { name: departmentId, in: query, schema: { type: integer } }
+        - { name: departmentId, in: query, schema: { type: integer, minimum: 1 } }
         - { name: fiscalYear, in: query, schema: { type: string, example: '2026-27' } }
       responses:
         '200':
@@ -174,7 +174,7 @@ paths:
       description: Filtering, search and sorting are server-side. Requesters see their own; department heads see their department; finance and admin see all.
       parameters:
         - { name: status, in: query, schema: { type: array, items: { $ref: '#/components/schemas/RequestStatus' } }, style: form, explode: false }
-        - { name: departmentId, in: query, schema: { type: integer } }
+        - { name: departmentId, in: query, schema: { type: integer, minimum: 1 } }
         - { name: mine, in: query, schema: { type: boolean }, description: Only requests the current user created }
         - { name: needsMyAction, in: query, schema: { type: boolean }, description: Only requests where allowedActions is not empty for the current user }
         - { name: q, in: query, schema: { type: string }, description: 'Search ID, title, vendor' }
@@ -388,7 +388,7 @@ paths:
 
   /reviews/{id}:
     parameters:
-      - { name: id, in: path, required: true, schema: { type: integer } }
+      - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
     get:
       operationId: getReview
       tags: [reviews]
@@ -403,7 +403,7 @@ paths:
 
   /reviews/{id}/decision:
     parameters:
-      - { name: id, in: path, required: true, schema: { type: integer } }
+      - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
     post:
       operationId: decideReview
       tags: [reviews]
@@ -486,7 +486,7 @@ paths:
 
   /notifications/{id}/read:
     parameters:
-      - { name: id, in: path, required: true, schema: { type: integer } }
+      - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
     post:
       operationId: markNotificationRead
       tags: [notifications]
@@ -708,18 +708,18 @@ components:
       type: object
       required: [id, name]
       properties:
-        id: { type: integer }
+        id: { type: integer, minimum: 1 }
         name: { type: string }
         role: { $ref: '#/components/schemas/Role' }
     User:
       type: object
       required: [id, name, email, role, active]
       properties:
-        id: { type: integer }
+        id: { type: integer, minimum: 1 }
         name: { type: string }
         email: { type: string, format: email }
         role: { $ref: '#/components/schemas/Role' }
-        departmentId: { type: [integer, 'null'] }
+        departmentId: { type: [integer, 'null'], minimum: 1 }
         active: { type: boolean }
     UserInput:
       type: object
@@ -728,7 +728,7 @@ components:
         name: { type: string }
         email: { type: string, format: email }
         role: { $ref: '#/components/schemas/Role' }
-        departmentId: { type: integer }
+        departmentId: { type: integer, minimum: 1 }
         password: { type: string, format: password, minLength: 8 }
     CurrentUser:
       allOf:
@@ -740,14 +740,14 @@ components:
       type: object
       required: [id, name]
       properties:
-        id: { type: integer }
+        id: { type: integer, minimum: 1 }
         name: { type: string }
-        headUserId: { type: [integer, 'null'] }
+        headUserId: { type: [integer, 'null'], minimum: 1 }
     Vendor:
       type: object
       required: [id, name]
       properties:
-        id: { type: integer }
+        id: { type: integer, minimum: 1 }
         name: { type: string }
         email: { type: [string, 'null'] }
         completedOrders: { type: integer, description: Count of PO_GENERATED requests with this vendor }
@@ -756,7 +756,7 @@ components:
       type: object
       required: [departmentId, fiscalYear, total, spent, committed, remaining, currency]
       properties:
-        departmentId: { type: integer }
+        departmentId: { type: integer, minimum: 1 }
         fiscalYear: { type: string, example: '2026-27' }
         total: { $ref: '#/components/schemas/Money' }
         spent: { $ref: '#/components/schemas/Money', description: Sum of PO_GENERATED amounts }
@@ -794,7 +794,7 @@ components:
         description: { type: string, maxLength: 4000 }
         category: { $ref: '#/components/schemas/Category' }
         priority: { $ref: '#/components/schemas/Priority' }
-        vendorId: { type: integer }
+        vendorId: { type: integer, minimum: 1 }
         neededBy: { type: string, format: date }
         items:
           type: array
@@ -812,7 +812,7 @@ components:
         category: { $ref: '#/components/schemas/Category' }
         priority: { $ref: '#/components/schemas/Priority' }
         requester: { $ref: '#/components/schemas/UserRef' }
-        departmentId: { type: integer }
+        departmentId: { type: integer, minimum: 1 }
         departmentName: { type: string }
         vendorName: { type: string }
         submittedAt: { type: [string, 'null'], format: date-time }
@@ -834,7 +834,7 @@ components:
             aiAnalysis:
               oneOf: [{ $ref: '#/components/schemas/AiAnalysis' }, { type: 'null' }]
               description: Latest analysis; null until aiStatus is COMPLETED
-            openReviewId: { type: [integer, 'null'] }
+            openReviewId: { type: [integer, 'null'], minimum: 1 }
             purchaseOrderId: { type: [string, 'null'] }
             allowedActions:
               type: array
@@ -862,7 +862,7 @@ components:
       description: Immutable. Never updated or deleted.
       required: [id, at, event, actorType]
       properties:
-        id: { type: integer }
+        id: { type: integer, minimum: 1 }
         at: { type: string, format: date-time }
         event:
           type: string
@@ -897,7 +897,7 @@ components:
         Never updated after it is stored.
       required: [id, requestId, recommendation, confidence, riskLevel, requiresHumanReview, reviewThreshold, reasons, reviewTriggers, evidence, modelVersion, agentVersions, analysedAt]
       properties:
-        id: { type: integer }
+        id: { type: integer, minimum: 1 }
         requestId: { type: string }
         recommendation: { $ref: '#/components/schemas/Recommendation' }
         confidence: { type: number, minimum: 0, maximum: 1 }
@@ -950,7 +950,7 @@ components:
       type: object
       required: [id, requestId, status, triggers, createdAt]
       properties:
-        id: { type: integer }
+        id: { type: integer, minimum: 1 }
         requestId: { type: string }
         requestTitle: { type: string }
         amount: { $ref: '#/components/schemas/Money' }
@@ -984,7 +984,7 @@ components:
       type: object
       required: [id, event, requestId, message, read, createdAt]
       properties:
-        id: { type: integer }
+        id: { type: integer, minimum: 1 }
         event: { type: string, description: Same values as HistoryEntry.event }
         requestId: { type: string }
         message: { type: string, example: 'PR-1042 approved by Finance. The AI recommended rejection.' }
@@ -1017,12 +1017,12 @@ components:
         requestId: { type: string }
         title: { type: string }
         description: { type: string }
-        departmentId: { type: integer }
+        departmentId: { type: integer, minimum: 1 }
         category: { $ref: '#/components/schemas/Category' }
         priority: { $ref: '#/components/schemas/Priority' }
         amount: { $ref: '#/components/schemas/Money' }
         currency: { $ref: '#/components/schemas/Currency' }
-        vendorId: { type: integer }
+        vendorId: { type: integer, minimum: 1 }
         itemCount: { type: integer }
         submittedAt: { type: string, format: date-time }
         budgetTotalAtSubmit: { $ref: '#/components/schemas/Money' }
@@ -1035,7 +1035,7 @@ components:
       required: [requestId, analysisId, aiRecommendation, finalOutcome, override, decidedAt]
       properties:
         requestId: { type: string }
-        analysisId: { type: integer }
+        analysisId: { type: integer, minimum: 1 }
         modelVersion: { type: string }
         aiRecommendation: { $ref: '#/components/schemas/Recommendation' }
         aiConfidence: { type: number }
