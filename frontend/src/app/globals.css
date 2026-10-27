@@ -1,6 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@300..800&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@300..800&display=swap");
 
 /* Tokens: Ledger base theme from docs/design-decision.md section 4.1. No dark theme yet (open decision 9.1). */
 
