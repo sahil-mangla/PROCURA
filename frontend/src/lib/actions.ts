@@ -114,7 +114,7 @@ function parsePayload(raw: string): { input?: PurchaseRequestInput; errors: Reco
     const unitPrice = Number(it.unitPrice);
     if (!it.description?.trim()) errors[`items[${i}].description`] = "Describe the item.";
     if (!Number.isInteger(quantity) || quantity < 1) errors[`items[${i}].quantity`] = "Enter a whole number, 1 or more.";
-    if (!Number.isFinite(unitPrice) || unitPrice < 0 || Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) > 1e-6) errors[`items[${i}].unitPrice`] = "Enter an amount in rupees, with at most 2 decimals.";
+    if (!it.unitPrice?.trim() || !Number.isFinite(unitPrice) || unitPrice < 0 || Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) > 1e-6) errors[`items[${i}].unitPrice`] = "Enter an amount in rupees, with at most 2 decimals.";
     return { description: it.description?.trim() ?? "", quantity, unitPrice };
   });
   if (Object.keys(errors).length) return { errors, payload };

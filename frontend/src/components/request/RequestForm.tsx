@@ -52,7 +52,8 @@ export function RequestForm({ initial, vendors }: { initial: RequestFormValues; 
       // values are still in state. Calling the action ourselves keeps what the person entered on screen.
       onSubmit={(e) => {
         e.preventDefault();
-        const data = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
+        const submitter = (e.nativeEvent as SubmitEvent)?.submitter as HTMLElement | null | undefined;
+        const data = submitter ? new FormData(e.currentTarget, submitter) : new FormData(e.currentTarget);
         startTransition(() => action(data));
       }}
       className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 sm:p-6"

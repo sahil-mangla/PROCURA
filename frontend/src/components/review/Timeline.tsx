@@ -180,11 +180,11 @@ export function Timeline({ history, analyses, pending }: Props) {
           );
           return (
             <li key={key} className="relative grid grid-cols-[1.625rem_minmax(0,1fr)] gap-x-3 md:grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)] md:gap-x-0">
-              <div className="col-start-2 md:col-start-1 md:row-start-1 md:pr-5">{isAi && row}</div>
+              <div className="col-start-2 row-start-1 md:col-start-1 md:row-start-1 md:pr-5">{isAi && row}</div>
               <div className="col-start-1 row-start-1 flex justify-center md:col-start-2">
                 <Dot lane={lane} />
               </div>
-              <div className="col-start-2 md:col-start-3 md:row-start-1 md:pl-5">{!isAi && row}</div>
+              <div className="col-start-2 row-start-1 md:col-start-3 md:row-start-1 md:pl-5">{!isAi && row}</div>
             </li>
           );
         })}
@@ -193,7 +193,7 @@ export function Timeline({ history, analyses, pending }: Props) {
             <div className="col-start-1 row-start-1 flex justify-center md:col-start-2">
               <Dot lane="human" dashed />
             </div>
-            <div className="col-start-2 md:col-start-3 md:row-start-1 md:pl-5">
+            <div className="col-start-2 row-start-1 md:col-start-3 md:row-start-1 md:pl-5">
               <TimelineRow id="pending" lane="human" dashed openId={openId} onOpenChange={() => {}} onPress={goToDecision} title={pending.title} sub={pending.sub} cta="Review now" />
             </div>
           </li>

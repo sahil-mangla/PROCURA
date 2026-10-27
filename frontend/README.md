@@ -51,7 +51,7 @@ src/
     api/                      generated schema, typed server client
     actions.ts                Server Actions: login, logout, decisions, submit, retry PO
     format.ts                 money, percentages, dates, labels
-  proxy.ts                    sends signed-out visitors to /login
+  middleware.ts               sends signed-out visitors to /login
 ```
 
 ## Not built yet
