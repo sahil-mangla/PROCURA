@@ -50,6 +50,7 @@ export function LoginForm({ next }: { next: Promise<string> }) {
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="username"
             required
+            suppressHydrationWarning
             placeholder="name@example.com"
             className="w-full rounded-xl border border-input bg-card/90 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
@@ -63,6 +64,7 @@ export function LoginForm({ next }: { next: Promise<string> }) {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             required
+            suppressHydrationWarning
             className="w-full rounded-xl border border-input bg-card/90 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>
