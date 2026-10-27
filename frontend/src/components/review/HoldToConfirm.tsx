@@ -24,7 +24,7 @@ const toneClass = {
  */
 export function HoldToConfirm({ label, holdLabel, disabled, tone, onConfirm }: Props) {
   const progress = useMotionValue(0);
-  const fill = useTransform(progress, (v) => `${v * 100}%`);
+  const clip = useTransform(progress, (v) => `inset(0 ${Math.max(0, 100 - v * 100)}% 0 0)`);
   const run = useRef<AnimationPlaybackControls | null>(null);
   const hintId = useId();
 
@@ -46,6 +46,8 @@ export function HoldToConfirm({ label, holdLabel, disabled, tone, onConfirm }: P
     animate(progress, 0, { duration: 0.25, ease: "easeOut" });
   };
 
+  const displayText = disabled ? label : holdLabel;
+
   return (
     <>
       <button
@@ -66,12 +68,16 @@ export function HoldToConfirm({ label, holdLabel, disabled, tone, onConfirm }: P
         }}
         onBlur={cancel}
         aria-describedby={hintId}
-        className="relative w-full touch-none overflow-hidden rounded-md border border-foreground/30 bg-secondary px-3 py-3 text-sm font-semibold select-none disabled:opacity-40"
+        className="relative flex w-full touch-none items-center justify-center overflow-hidden rounded-md border border-foreground/30 bg-secondary px-3 py-3 text-sm font-semibold select-none disabled:opacity-40"
       >
-        <motion.span aria-hidden className={`absolute inset-y-0 left-0 ${toneClass[tone]}`} style={{ width: fill }} />
-        <span className="relative mix-blend-normal">
-          <span className="text-foreground">{disabled ? label : holdLabel}</span>
-        </span>
+        <span className="text-foreground">{displayText}</span>
+        <motion.span
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 flex items-center justify-center ${toneClass[tone]}`}
+          style={{ clipPath: clip }}
+        >
+          {displayText}
+        </motion.span>
       </button>
       <span id={hintId} className="sr-only">Press and hold for about one second to confirm. Release to cancel.</span>
     </>

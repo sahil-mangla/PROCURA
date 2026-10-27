@@ -3,9 +3,11 @@
 // Adapted from Magic UI "Highlighter" (MIT) https://github.com/magicuidesign/magicui
 // Changes: reduced motion draws the mark without animating, a start delay so it can follow another animation,
 // the mark is decorative (aria-hidden) so screen readers read the text once, no scroll-into-view option.
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { annotate } from "rough-notation";
 import type { RoughAnnotation } from "rough-notation/lib/model";
+
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 type Props = {
   children: React.ReactNode;
@@ -24,7 +26,7 @@ type Props = {
 export function Highlighter({ children, action = "highlight", color = "#f4e04d", strokeWidth = 1.5, animationDuration = 600, iterations = 2, padding = 2, multiline = true, delay = 0 }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

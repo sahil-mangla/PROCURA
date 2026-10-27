@@ -1,7 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
+
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 type Props = {
   /** True when the human decision differs from the AI recommendation. */
@@ -20,7 +22,7 @@ type Props = {
 export function Divergence({ override, aiLabel, humanLabel, compact }: Props) {
   const root = useRef<SVGSVGElement>(null);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const svg = root.current;
     if (!svg) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

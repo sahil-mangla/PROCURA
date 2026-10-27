@@ -13,6 +13,7 @@ import { api, unwrap } from "@/lib/api/server";
 import type { PurchaseRequestDetail, ReviewTrigger } from "@/lib/api/types";
 import { getCurrentUser } from "@/lib/auth";
 import { date, humanize, inr, pct, roleLabel, categoryLabel } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export async function generateMetadata({ params }: PageProps<"/requests/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -170,14 +171,22 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
             <div className="space-y-3 px-5 py-4">
               <div className="flex items-baseline justify-between">
                 <p className="text-sm text-muted-foreground">Used after this request</p>
-                <p className="text-xl font-semibold tnum"><Pct value={used.after} /></p>
+                <p className={cn("text-xl font-semibold tnum", used.after > 100 ? "text-destructive" : "")}><Pct value={used.after} /></p>
               </div>
-              <Progress aria-label="Budget used after this request" value={Math.min(100, used.after)} className="h-2" />
-              {used.after > 100 && <p className="text-xs font-semibold text-destructive">This request exceeds the remaining budget.</p>}
+              <Progress
+                aria-label="Budget used after this request"
+                value={Math.min(100, used.after)}
+                className={cn("h-2", used.after > 100 && "[&>[data-slot=progress-indicator]]:bg-destructive")}
+              />
+              {used.after > 100 && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive">
+                  <span>Exceeds remaining budget</span>
+                </div>
+              )}
               <dl className="space-y-1 text-sm">
                 <div className="flex justify-between"><dt className="text-muted-foreground">Budget {budget.fiscalYear}</dt><dd className="tnum">{inr(budget.total)}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Used or committed</dt><dd className="tnum">{used.now}%</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Remaining</dt><dd className="tnum">{inr(budget.remaining)}</dd></div>
+                <div className="flex justify-between"><dt className="text-muted-foreground">Used or committed</dt><dd className="tnum"><Pct value={used.now} /></dd></div>
+                <div className="flex justify-between"><dt className="text-muted-foreground">Remaining</dt><dd className={cn("tnum", budget.remaining < 0 ? "text-destructive font-semibold" : "")}>{inr(budget.remaining)}</dd></div>
               </dl>
             </div>
           </section>

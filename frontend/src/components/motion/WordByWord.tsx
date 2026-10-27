@@ -3,7 +3,6 @@
 // Adapted from RewampUI "Word By Word Text" (MIT) https://github.com/palakonweb/Rewamp-UI
 // Changes: text prop, flows inline with ordinary spaces so wrapping and alignment follow the surrounding heading,
 // no accent colour on the last words, full text for screen readers, reduced motion renders plain text.
-import { Fragment } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
 type Props = { text: string; className?: string; delay?: number; stagger?: number };
@@ -17,7 +16,7 @@ export function WordByWord({ text, className, delay = 0, stagger = 0.06 }: Props
       <span className="sr-only">{text}</span>
       <span aria-hidden>
         {words.map((word, i) => (
-          <Fragment key={i}>
+          <span key={i} className="inline-block">
             <motion.span
               className="inline-block"
               initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
@@ -26,8 +25,8 @@ export function WordByWord({ text, className, delay = 0, stagger = 0.06 }: Props
             >
               {word}
             </motion.span>
-            {i < words.length - 1 ? " " : ""}
-          </Fragment>
+            {i < words.length - 1 ? "\u00A0" : ""}
+          </span>
         ))}
       </span>
     </span>
