@@ -38,7 +38,7 @@ export function AppShell({
       title={TITLES[section]}
       headingLevel={1}
       headerActions={headerActions}
-      className="min-h-screen"
+      className="h-dvh"
     >
       {children}
     </DashboardShell>

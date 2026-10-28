@@ -19,7 +19,7 @@ export function AiDetails({ analysis: a, animate = true }: { analysis: AiAnalysi
   const summary = aiSummary(a);
   return (
     <div className="space-y-4">
-      <p className="min-h-[2.75rem] text-sm leading-relaxed">{animate ? <Typewriter text={summary} /> : summary}</p>
+      <p className="text-sm leading-relaxed">{animate ? <Typewriter text={summary} /> : summary}</p>
       <div>
         <h3 className="mb-1.5 text-sm font-semibold">Why?</h3>
         <ul className="space-y-1.5">

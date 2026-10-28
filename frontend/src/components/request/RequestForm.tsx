@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useId, useState } from "react";
+import { startTransition, useActionState, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, Trash2 } from "lucide-react";
 import { saveRequest } from "@/lib/actions";
@@ -35,9 +35,31 @@ export function RequestForm({ initial, vendors }: { initial: RequestFormValues; 
   const [state, action, pending] = useActionState(saveRequest, undefined);
   const uid = useId();
   const id = (n: string) => `${uid}-${n}`;
-  const err = state?.fieldErrors ?? {};
-  const set = <K extends keyof RequestFormValues>(k: K, val: RequestFormValues[K]) => setV((p) => ({ ...p, [k]: val }));
+  // Rows carry a stable key, so removing one in the middle does not hand its inputs to the row below.
+  const nextKey = useRef(initial.items.length);
+  const [rowKeys, setRowKeys] = useState(() => initial.items.map((_, n) => n));
+  // Server errors name rows by position. After a row is removed they would point at the wrong rows, so they are hidden until the next save.
+  const [staleFor, setStaleFor] = useState<typeof state>();
+  const rawErrors = state?.fieldErrors ?? {};
+  const err = state !== undefined && state === staleFor ? Object.fromEntries(Object.entries(rawErrors).filter(([k]) => !k.startsWith("items["))) : rawErrors;
+  // The message sits at the top of a long form; bring it into view after a failed save.
+  const alertRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (state?.message) alertRef.current?.scrollIntoView({ block: "center" });
+  }, [state]);
+  const set =<K extends keyof RequestFormValues>(k: K, val: RequestFormValues[K]) => setV((p) => ({ ...p, [k]: val }));
   const setItem = (i: number, patch: Partial<Item>) => setV((p) => ({ ...p, items: p.items.map((it, n) => (n === i ? { ...it, ...patch } : it)) }));
+
+  const addItem = () => {
+    const key = nextKey.current++;
+    setRowKeys((k) => [...k, key]);
+    setV((p) => ({ ...p, items: [...p.items, { description: "", quantity: "1", unitPrice: "" }] }));
+  };
+  const removeItem = (i: number) => {
+    setRowKeys((k) => k.filter((_, n) => n !== i));
+    setV((p) => ({ ...p, items: p.items.filter((_, n) => n !== i) }));
+    setStaleFor(state);
+  };
 
   const total = v.items.reduce((sum, it) => {
     const q = Number(it.quantity), u = Number(it.unitPrice);
@@ -62,10 +84,10 @@ export function RequestForm({ initial, vendors }: { initial: RequestFormValues; 
       <input type="hidden" name="payload" value={JSON.stringify(v)} />
 
       {state?.message && (
-        <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/8 px-4 py-3 text-sm text-destructive">{state.message}</p>
+        <p ref={alertRef} role="alert" className="rounded-xl border border-destructive/40 bg-destructive/8 px-4 py-3 text-sm text-destructive">{state.message}</p>
       )}
 
-      <section className="rounded-2xl border border-border/70 bg-card/85 p-5 backdrop-blur-sm" aria-labelledby={id("details")}>
+      <section className="rounded-2xl border border-border/70 bg-card/85 p-5" aria-labelledby={id("details")}>
         <h2 id={id("details")} className="mb-4 text-base font-semibold">Details</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
@@ -101,12 +123,12 @@ export function RequestForm({ initial, vendors }: { initial: RequestFormValues; 
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border/70 bg-card/85 p-5 backdrop-blur-sm" aria-labelledby={id("items")}>
+      <section className="rounded-2xl border border-border/70 bg-card/85 p-5" aria-labelledby={id("items")}>
         <h2 id={id("items")} className="mb-4 text-base font-semibold">Items</h2>
         {err.items && <p className="mb-3 text-xs font-medium text-destructive">{err.items}</p>}
         <ul className="space-y-4">
           {v.items.map((it, i) => (
-            <li key={i} className="grid grid-cols-[1fr_5rem_8rem_auto] items-start gap-2 max-sm:grid-cols-2">
+            <li key={rowKeys[i]} className="grid grid-cols-[1fr_5rem_8rem_auto] items-start gap-2 max-sm:grid-cols-2">
               <div className="max-sm:col-span-2">
                 <Field label={i === 0 ? "Item" : `Item ${i + 1}`} htmlFor={id(`d${i}`)} error={err[`items[${i}].description`]}>
                   <input id={id(`d${i}`)} className={input} value={it.description} maxLength={300} aria-invalid={!!err[`items[${i}].description`]} onChange={(e) => setItem(i, { description: e.target.value })} />
@@ -118,7 +140,7 @@ export function RequestForm({ initial, vendors }: { initial: RequestFormValues; 
               <Field label="Unit price (₹)" htmlFor={id(`u${i}`)} error={err[`items[${i}].unitPrice`]}>
                 <input id={id(`u${i}`)} inputMode="decimal" className={cn(input, "tnum")} value={it.unitPrice} aria-invalid={!!err[`items[${i}].unitPrice`]} onChange={(e) => setItem(i, { unitPrice: e.target.value })} />
               </Field>
-              <button type="button" disabled={v.items.length === 1} onClick={() => setV((p) => ({ ...p, items: p.items.filter((_, n) => n !== i) }))} aria-label={`Remove item ${i + 1}`}
+              <button type="button" disabled={v.items.length === 1} onClick={() => removeItem(i)} aria-label={`Remove item ${i + 1}`}
                 className="mt-6 grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground max-sm:mt-6 max-sm:justify-self-end">
                 <Trash2 className="size-4" aria-hidden />
               </button>
@@ -126,7 +148,7 @@ export function RequestForm({ initial, vendors }: { initial: RequestFormValues; 
           ))}
         </ul>
         <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-          <button type="button" onClick={() => setV((p) => ({ ...p, items: [...p.items, { description: "", quantity: "1", unitPrice: "" }] }))} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1.5 text-sm font-medium">
+          <button type="button" onClick={addItem} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1.5 text-sm font-medium">
             <Plus className="size-4" aria-hidden /> Add item
           </button>
           <p className="text-sm"><span className="text-muted-foreground">Total </span><span className="text-lg font-semibold tnum">{inr(total)}</span></p>

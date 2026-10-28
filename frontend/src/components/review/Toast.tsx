@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { CircleCheck, Info, ShieldAlert, TriangleAlert, X } from "lucide-react";
 import type { HumanDecision, Recommendation } from "@/lib/api/types";
@@ -28,14 +29,21 @@ export function buildDecisionToast(decision: HumanDecision, ai: { recommendation
 
 /** A small, self-dismissing notification. It sits over the page and never changes layout. */
 export function Toast({ toast, onClose }: { toast: ToastData | null; onClose: () => void }) {
+  // Callers pass a fresh onClose every render; reading it through a ref keeps the 6.5 s timer from restarting on each keystroke.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(onClose, 6500);
+    const t = setTimeout(() => onCloseRef.current(), 6500);
     return () => clearTimeout(t);
-  }, [toast, onClose]);
+  }, [toast]);
   const Icon = toast?.kind === "override" ? ShieldAlert : toast?.kind === "info" ? Info : toast?.kind === "error" ? TriangleAlert : CircleCheck;
   const tint = toast?.kind === "override" || toast?.kind === "error" ? "text-destructive" : toast?.kind === "info" ? "text-warn" : "text-ok";
-  return (
+  if (typeof document === "undefined") return null;
+  // Portaled to the body: a blurred or clipped ancestor would otherwise become the containing block for `fixed`.
+  return createPortal(
     <AnimatePresence>
       {toast && (
         <motion.div
@@ -58,6 +66,7 @@ export function Toast({ toast, onClose }: { toast: ToastData | null; onClose: ()
           </button>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

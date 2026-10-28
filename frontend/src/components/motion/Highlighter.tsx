@@ -31,23 +31,15 @@ export function Highlighter({ children, action = "highlight", color = "#f4e04d",
     if (!el) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const annotation: RoughAnnotation = annotate(el, { type: action, color, strokeWidth, animationDuration, iterations, padding, multiline, animate: !reduce });
-    // Redraw if the text reflows, otherwise the mark would sit where the words used to be.
-    const resize = new ResizeObserver(() => {
-      annotation.hide();
-      annotation.show();
-    });
-    const timer = setTimeout(() => {
-      annotation.show();
-      resize.observe(el);
-    }, reduce ? 0 : delay);
-    // rough-notation's SVG carries no meaning; keep it away from assistive tech.
-    const hideSvg = () => el.querySelectorAll("svg").forEach((s) => s.setAttribute("aria-hidden", "true"));
-    const mo = new MutationObserver(hideSvg);
-    mo.observe(el, { childList: true });
+    // rough-notation redraws the mark itself when the text reflows, without replaying the draw animation.
+    // (An extra hide()/show() observer here made the mark redraw from scratch on every layout change.)
+    const timer = setTimeout(() => annotation.show(), reduce ? 0 : delay);
+    // rough-notation's SVG carries no meaning; keep it away from assistive tech. It is inserted beside the
+    // element, before it for a highlight and after it for every other type.
+    const svg = action === "highlight" ? el.previousElementSibling : el.nextElementSibling;
+    svg?.setAttribute("aria-hidden", "true");
     return () => {
       clearTimeout(timer);
-      resize.disconnect();
-      mo.disconnect();
       annotation.remove();
     };
   }, [action, color, strokeWidth, animationDuration, iterations, padding, multiline, delay]);

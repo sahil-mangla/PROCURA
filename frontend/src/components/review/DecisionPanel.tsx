@@ -97,7 +97,7 @@ export function DecisionPanel({ requestId, version, allowedActions, openReviewId
 
   if (recorded) {
     return (
-      <section id="decision-panel" tabIndex={-1} className="relative overflow-hidden rounded-2xl border-2 border-border bg-card/90 shadow-[0_14px_30px_-20px_rgba(20,35,59,0.35)] backdrop-blur-sm outline-none" aria-labelledby="decision-h">
+      <section id="decision-panel" tabIndex={-1} className="relative overflow-hidden rounded-2xl border-2 border-border bg-card/90 shadow-[0_14px_30px_-20px_rgba(20,35,59,0.35)] outline-none" aria-labelledby="decision-h">
         <header className="border-b border-border px-5 py-3">
           <h2 id="decision-h" className="text-base font-semibold">Decision recorded</h2>
           <p className="text-xs text-muted-foreground">{reviewer.name} decided: {decisionLabel[recorded.decision].toLowerCase()}.</p>
@@ -134,7 +134,7 @@ export function DecisionPanel({ requestId, version, allowedActions, openReviewId
 
   if (choices.length === 0) {
     return (
-      <section id="decision-panel" tabIndex={-1} className="rounded-2xl border border-border/70 bg-card/85 backdrop-blur-sm outline-none" aria-labelledby="decision-h">
+      <section id="decision-panel" tabIndex={-1} className="rounded-2xl border border-border/70 bg-card/85 outline-none" aria-labelledby="decision-h">
         <header className="border-b border-border px-5 py-3">
           <h2 id="decision-h" className="text-base font-semibold">{canSubmit || canRetryPo ? "Your next step" : "Nothing for you to do"}</h2>
           <p className="text-xs text-muted-foreground">{idleText}</p>
@@ -162,7 +162,7 @@ export function DecisionPanel({ requestId, version, allowedActions, openReviewId
   }
 
   return (
-    <section id="decision-panel" tabIndex={-1} className="relative overflow-hidden rounded-2xl border-2 border-warn/50 bg-card/90 shadow-[0_14px_30px_-20px_rgba(120,80,10,0.45)] backdrop-blur-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-labelledby="decision-h">
+    <section id="decision-panel" tabIndex={-1} className="relative overflow-hidden rounded-2xl border-2 border-warn/50 bg-card/90 shadow-[0_14px_30px_-20px_rgba(120,80,10,0.45)] outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-labelledby="decision-h">
       <header className="border-b border-warn/40 bg-warn/10 px-5 py-3">
         <h2 id="decision-h" className="text-base font-semibold">{isReview ? "Human review required" : "Your decision"}</h2>
         {isReview && triggers.length > 0 ? (

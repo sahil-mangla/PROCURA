@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 /** Panel recipe from the design doc, section 4.1. */
 export const panel =
-  "rounded-2xl border border-border/70 bg-card/85 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_14px_30px_-20px_rgba(20,35,59,0.35)] backdrop-blur-sm";
+  "rounded-2xl border border-border/70 bg-card/85 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_14px_30px_-20px_rgba(20,35,59,0.35)] ";
 
 export function Section({ title, aside, children, className }: { title: string; aside?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
@@ -38,7 +38,9 @@ const stepSr = { DONE: "Done. ", CURRENT: "In progress. ", PENDING: "Not started
 /** Workflow progress. Steps and their states come from the backend (D15); the UI never derives them. */
 export function Stepper({ steps }: { steps: WorkflowStep[] }) {
   return (
-    <ol className="grid grid-cols-2 gap-x-4 gap-y-3 py-3 sm:grid-cols-3 lg:grid-cols-6">
+    // Container queries: the stepper sits in a column beside the sidebar and side panel, so window width says nothing about its room.
+    <div className="@container">
+    <ol className="grid grid-cols-2 gap-x-4 gap-y-3 py-3 @md:grid-cols-3 @4xl:grid-cols-6">
       {steps.map((s, i) => (
         <li key={s.key} className={cn("flex flex-col gap-1.5", s.state === "SKIPPED" && "opacity-50")}>
           <div className="flex items-center gap-2">
@@ -64,5 +66,6 @@ export function Stepper({ steps }: { steps: WorkflowStep[] }) {
         </li>
       ))}
     </ol>
+    </div>
   );
 }

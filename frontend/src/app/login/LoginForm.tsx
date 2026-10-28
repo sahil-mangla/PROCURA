@@ -10,6 +10,9 @@ const DEMO_PERSONAS = [
   { role: "Admin", email: "admin@example.com" },
 ];
 
+// The personas share a known password, so they are on in development and only in a production build when asked for.
+const SHOW_DEMO = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_DEMO_LOGIN === "true";
+
 export function LoginForm({ next }: { next: Promise<string> }) {
   const nextPath = use(next);
   const [state, action, pending] = useActionState(login, undefined);
@@ -23,6 +26,7 @@ export function LoginForm({ next }: { next: Promise<string> }) {
 
   return (
     <div className="mt-6 space-y-5">
+      {SHOW_DEMO && (
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick demo personas</p>
         <div className="flex flex-wrap gap-1.5">
@@ -38,6 +42,7 @@ export function LoginForm({ next }: { next: Promise<string> }) {
           ))}
         </div>
       </div>
+      )}
 
       <form action={action} className="space-y-4">
         <input type="hidden" name="next" value={nextPath} />

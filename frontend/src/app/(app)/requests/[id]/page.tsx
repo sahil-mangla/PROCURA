@@ -54,13 +54,14 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
   const used = budget && budget.total > 0 ? { now: pct((budget.spent + budget.committed) / budget.total), after: pct((budget.spent + budget.committed + request.amount) / budget.total) } : null;
 
   return (
-    <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
+    <div className="@container">
+    <div className="grid gap-6 p-4 sm:p-6 @5xl:grid-cols-[minmax(0,1fr)_23rem]">
       <Suspense>
         <Notice searchParams={searchParams} />
       </Suspense>
 
       {/* Hero band */}
-      <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-md sm:p-8 xl:col-span-2" aria-label="Request summary">
+      <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-6 sm:p-8 @5xl:col-span-2" aria-label="Request summary">
         <div aria-hidden className="pointer-events-none absolute -top-28 -right-20 size-80 rounded-full bg-[#8fd1b9]/70 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-32 left-1/3 size-72 rounded-full bg-[#efe6a6]/70 blur-3xl" />
         <p className="relative text-sm text-muted-foreground tnum">
@@ -148,7 +149,7 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
         </Section>
       </div>
 
-      <aside className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-4 xl:self-start">
+      <aside className="flex min-w-0 flex-col gap-6 @5xl:sticky @5xl:top-4 @5xl:self-start">
         <AiPanel status={request.aiStatus ?? "NOT_STARTED"} analysis={ai} />
 
         <DecisionPanel
@@ -193,6 +194,7 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
         )}
       </aside>
     </div>
+    </div>
   );
 }
 
@@ -202,7 +204,7 @@ async function Notice({ searchParams }: { searchParams: PageProps<"/requests/[id
   const text = Array.isArray(n) ? n[0] : n;
   if (!text) return null;
   return (
-    <p role="status" className="rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm xl:col-span-2">
+    <p role="status" className="rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm @5xl:col-span-2">
       {text}
     </p>
   );

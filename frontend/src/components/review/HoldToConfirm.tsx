@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { animate, motion, useMotionValue, useTransform, type AnimationPlaybackControls } from "motion/react";
 
 type Props = {
@@ -45,6 +45,11 @@ export function HoldToConfirm({ label, holdLabel, disabled, tone, onConfirm }: P
     run.current = null;
     animate(progress, 0, { duration: 0.25, ease: "easeOut" });
   };
+
+  // The fill stays full while the action runs. If the server refuses it the button comes back enabled, so empty the fill to let it be held again.
+  useEffect(() => {
+    if (!disabled && !run.current) animate(progress, 0, { duration: 0.25, ease: "easeOut" });
+  }, [disabled, progress]);
 
   const displayText = disabled ? label : holdLabel;
 

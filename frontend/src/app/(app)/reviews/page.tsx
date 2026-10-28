@@ -10,7 +10,22 @@ export const metadata: Metadata = { title: "Needs review" };
 /** Finance managers' queue of requests waiting for a human review decision. */
 export default async function ReviewsPage() {
   const client = await api();
-  const { items = [] } = unwrap(await client.GET("/reviews", { params: { query: { status: "OPEN" } } }));
+  const result = await client.GET("/reviews", { params: { query: { status: "OPEN" } } });
+  // The queue is for finance managers; everyone else gets an explanation rather than the generic error page.
+  if (result.response.status === 403) {
+    return (
+      <div className="p-4 sm:p-6">
+        <section className={`${panel} mx-auto max-w-lg p-6 text-center`}>
+          <h2 className="text-lg font-semibold">Not available for your role</h2>
+          <p className="mt-1 text-sm text-muted-foreground">The review queue is for finance managers. Requests that need your action are under Requests.</p>
+          <Link href="/requests?filter=Needs+my+action" className="mt-4 inline-block rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+            Requests needing my action
+          </Link>
+        </section>
+      </div>
+    );
+  }
+  const { items = [] } = unwrap(result);
 
   return (
     <div className="p-4 sm:p-6">
