@@ -1,0 +1,13 @@
+package com.procura.common.error;
+
+public enum ProblemCode {
+    VALIDATION_FAILED,
+    UNAUTHENTICATED,
+    FORBIDDEN,
+    NOT_FOUND,
+    INVALID_TRANSITION,
+    WORKFLOW_CONFLICT,
+    BUSINESS_RULE_VIOLATION,
+    INTERNAL_ERROR
+}
+

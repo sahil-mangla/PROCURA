@@ -8,3 +8,14 @@ dist/
 test-results/
 playwright-report/
 .playwright-mcp/
+
+# Java / Maven
+target/
+backend/target/
+*.class
+.m2/
+.idea/
+*.iml
+.project
+.classpath
+.settings/

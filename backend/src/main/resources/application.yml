@@ -1,0 +1,50 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: procura-backend
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:procura}
+    username: ${DB_USER:procura}
+    password: ${DB_PASSWORD:procura_dev_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+# PROCURA Platform Configuration
+security:
+  jwt:
+    # 256-bit hex secret key for HMAC-SHA256
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    expiration-seconds: ${JWT_EXPIRATION_SECONDS:86400}
+  service-key: ${AI_SERVICE_KEY:procura-internal-service-key-2026}
+
+procura:
+  ai:
+    service-url: ${AI_SERVICE_URL:http://localhost:8000}
+    mock-enabled: ${AI_MOCK_ENABLED:true}
+    timeout-seconds: 15
+    retry-attempts: 1
+  workflow:
+    high-value-threshold: 50000.00
+    confidence-threshold: 0.80
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

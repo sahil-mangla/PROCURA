@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: procura-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: procura
+      POSTGRES_USER: procura
+      POSTGRES_PASSWORD: procura_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - procura_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U procura -d procura"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: procura-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: procura
+      DB_USER: procura
+      DB_PASSWORD: procura_dev_password
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      AI_SERVICE_URL: http://ai-service:8000
+      AI_SERVICE_KEY: procura-internal-service-key-2026
+    ports:
+      - "8080:8080"
+
+volumes:
+  procura_pgdata:
+
