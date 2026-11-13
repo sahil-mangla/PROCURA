@@ -45,7 +45,10 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
     client.GET("/purchase-requests/{id}/ai-analyses", path).then(unwrap),
     getCurrentUser(),
   ]);
-  const review = request.openReviewId != null ? await client.GET("/reviews/{id}", { params: { path: { id: request.openReviewId } } }).then(unwrap) : null;
+  // Only finance managers can read /reviews, so other roles skip it rather than hit a 403.
+  const review = request.allowedActions.includes("REVIEW") && request.openReviewId != null
+    ? await client.GET("/reviews/{id}", { params: { path: { id: request.openReviewId } } }).then((r) => r.data ?? null)
+    : null;
 
   const ai = request.aiAnalysis ?? null;
   const triggers: ReviewTrigger[] = review?.triggers ?? ai?.reviewTriggers.map((t) => ({ ...t, source: "AI" as const })) ?? [];

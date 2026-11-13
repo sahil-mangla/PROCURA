@@ -32,7 +32,7 @@ function safeNext(next: string): string {
 }
 
 export async function login(_prev: LoginState, form: FormData): Promise<LoginState> {
-  const email = String(form.get("email") ?? "").trim();
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
   const password = String(form.get("password") ?? "");
   const next = String(form.get("next") ?? "");
   if (!email || !password) return { error: "Enter your email and password." };
@@ -41,6 +41,7 @@ export async function login(_prev: LoginState, form: FormData): Promise<LoginSta
   if (!result) return { error: "The server could not be reached. Try again in a moment." };
   const { data, response } = result;
   if (!data) {
+    if (response.status === 400) return { error: "Enter a valid email." };
     return { error: response.status === 401 ? "That email and password do not match an account." : "The server could not sign you in. Try again in a moment." };
   }
 

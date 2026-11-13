@@ -4,10 +4,10 @@ import { use, useActionState, useState } from "react";
 import { login } from "@/lib/actions";
 
 const DEMO_PERSONAS = [
-  { role: "Requester", email: "requester@example.com" },
-  { role: "Dept Head", email: "depthead@example.com" },
-  { role: "Finance", email: "finance@example.com" },
-  { role: "Admin", email: "admin@example.com" },
+  { role: "Requester", email: "requester@procura.local" },
+  { role: "Dept Head", email: "depthead@procura.local" },
+  { role: "Finance", email: "finance@procura.local" },
+  { role: "Admin", email: "admin@procura.local" },
 ];
 
 // The personas share a known password, so they are on in development and only in a production build when asked for.

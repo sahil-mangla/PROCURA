@@ -8,7 +8,7 @@ import type { Problem } from "./types";
 /** httpOnly cookie holding the backend's JWT. The browser never reads it; only server code does. */
 export const SESSION_COOKIE = "procura_token";
 
-const baseUrl = process.env.API_URL ?? "http://localhost:4010";
+const baseUrl = process.env.API_URL ?? "http://localhost:8080/api";
 
 /** A typed client for the backend, authenticated as the current user. Server-only. */
 export async function api() {

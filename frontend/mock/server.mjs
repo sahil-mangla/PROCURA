@@ -2,10 +2,10 @@
 // Follows contracts/openapi.yaml. State lives in memory, so restarting resets it. Run with `npm run mock`.
 //
 // Sign in with any persona below and the password `password123`:
-//   requester@example.com   Aarav Mehta, Requester, Engineering
-//   depthead@example.com    Priya Nair, Department head, Engineering
-//   finance@example.com     Rohan Iyer, Finance manager (sees the review queue)
-//   admin@example.com       Neha Kapoor, Admin
+//   requester@procura.local   Aarav Mehta, Requester, Engineering
+//   depthead@procura.local    Priya Nair, Department head, Engineering
+//   finance@procura.local     Rohan Iyer, Finance manager (sees the review queue)
+//   admin@procura.local       Neha Kapoor, Admin
 //   karthik@example.com     Karthik Rao, Requester, Operations
 //   meera@example.com       Meera Shah, Department head, Operations
 import http from "node:http";
@@ -24,10 +24,10 @@ const departments = [
   { id: 2, name: "Operations", headUserId: 6 },
 ];
 const users = [
-  { id: 1, name: "Aarav Mehta", email: "requester@example.com", role: "REQUESTER", departmentId: 1, active: true },
-  { id: 2, name: "Priya Nair", email: "depthead@example.com", role: "DEPARTMENT_HEAD", departmentId: 1, active: true },
-  { id: 3, name: "Rohan Iyer", email: "finance@example.com", role: "FINANCE_MANAGER", departmentId: null, active: true },
-  { id: 4, name: "Neha Kapoor", email: "admin@example.com", role: "ADMIN", departmentId: null, active: true },
+  { id: 1, name: "Aarav Mehta", email: "requester@procura.local", role: "REQUESTER", departmentId: 1, active: true },
+  { id: 2, name: "Priya Nair", email: "depthead@procura.local", role: "DEPARTMENT_HEAD", departmentId: 1, active: true },
+  { id: 3, name: "Rohan Iyer", email: "finance@procura.local", role: "FINANCE_MANAGER", departmentId: null, active: true },
+  { id: 4, name: "Neha Kapoor", email: "admin@procura.local", role: "ADMIN", departmentId: null, active: true },
   { id: 5, name: "Karthik Rao", email: "karthik@example.com", role: "REQUESTER", departmentId: 2, active: true },
   { id: 6, name: "Meera Shah", email: "meera@example.com", role: "DEPARTMENT_HEAD", departmentId: 2, active: true },
 ];
