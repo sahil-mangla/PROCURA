@@ -199,7 +199,7 @@ public class PurchaseRequestService {
         }
         request.recalculateTotals();
 
-        PurchaseRequest saved = requestRepository.save(request);
+        PurchaseRequest saved = requestRepository.saveAndFlush(request);
         return toDetailDto(saved, actor);
     }
 
