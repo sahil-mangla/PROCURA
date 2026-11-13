@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:mock": "concurrently -k -n mock,web -c gray,blue \"npm:mock\" \"API_URL=http://localhost:4010 next dev\"",
-    "mock": "prism mock ../contracts/openapi.yaml --port 4010",
+    "mock": "node mock/server.mjs",
+    "mock:contract": "prism mock ../contracts/openapi.yaml --port 4010",
     "gen:api": "openapi-typescript ../contracts/openapi.yaml -o src/lib/api/schema.d.ts",
     "build": "next build",
     "start": "next start",

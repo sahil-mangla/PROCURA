@@ -45,8 +45,9 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
   };
 
   return (
+    <div className="@container">
     <div className="flex flex-col gap-5 p-4 sm:p-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 @6xl:flex-row @6xl:items-center @6xl:justify-between">
         <nav aria-label="Filter requests" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
           {FILTERS.map((f, i) => (
             <Link
@@ -63,7 +64,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
           ))}
         </nav>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <form role="search" action="/requests" className="relative w-full lg:w-80">
+        <form role="search" action="/requests" className="relative w-full @6xl:w-80">
           {filterIndex > 0 && <input type="hidden" name="filter" value={filter.label} />}
           <label htmlFor="q" className="sr-only">Search requests</label>
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -124,6 +125,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
           </span>
         </nav>
       )}
+    </div>
     </div>
   );
 }
