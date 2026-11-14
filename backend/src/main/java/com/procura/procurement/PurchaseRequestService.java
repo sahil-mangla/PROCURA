@@ -272,6 +272,24 @@ public class PurchaseRequestService {
                 predicates.add(cb.or(idMatch, titleMatch, vendorMatch));
             }
 
+            // 5. needsMyAction: in SQL so paging/totals stay right; mirrors AllowedActionsCalculator
+            if (Boolean.TRUE.equals(needsMyAction)) {
+                var status = root.get("status");
+                var notOwner = cb.notEqual(root.get("requester").get("id"), actor.getId());
+                List<Predicate> any = new ArrayList<>();
+                any.add(cb.and(cb.equal(root.get("requester").get("id"), actor.getId()),
+                        status.in(RequestStatus.DRAFT, RequestStatus.INFO_REQUESTED)));
+                if (actor.getRole() == Role.DEPARTMENT_HEAD && actor.getDepartmentId() != null) {
+                    any.add(cb.and(notOwner, cb.equal(status, RequestStatus.SUBMITTED),
+                            cb.equal(root.get("department").get("id"), actor.getDepartmentId())));
+                }
+                if (actor.getRole() == Role.FINANCE_MANAGER) {
+                    any.add(cb.and(notOwner, status.in(RequestStatus.DEPARTMENT_APPROVED, RequestStatus.HUMAN_REVIEW)));
+                    any.add(cb.and(cb.equal(status, RequestStatus.FINANCE_APPROVED), cb.isNull(root.get("purchaseOrderId"))));
+                }
+                predicates.add(cb.or(any.toArray(new Predicate[0])));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
@@ -279,12 +297,6 @@ public class PurchaseRequestService {
 
         List<PurchaseRequestSummaryDto> items = new ArrayList<>();
         for (PurchaseRequest req : requestPage.getContent()) {
-            if (Boolean.TRUE.equals(needsMyAction)) {
-                List<AllowedAction> actions = allowedActionsCalculator.calculateAllowedActions(req, actor);
-                if (actions.isEmpty()) {
-                    continue;
-                }
-            }
             items.add(toSummaryDto(req));
         }
 
