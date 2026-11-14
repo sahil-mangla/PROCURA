@@ -3,7 +3,6 @@ package com.procura.workflow;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.procura.ai.AiAnalysisEntity;
 import com.procura.ai.AiAnalysisRepository;
-import com.procura.ai.AiAnalysisService;
 import com.procura.ai.dto.ReviewTriggerDto;
 import com.procura.audit.ApprovalHistory;
 import com.procura.audit.ApprovalHistoryRepository;
@@ -47,7 +46,6 @@ public class WorkflowEngine {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final OutboxService outboxService;
-    private final AiAnalysisService aiAnalysisService;
     private final PurchaseOrderService purchaseOrderService;
     private final ObjectMapper objectMapper;
     private final BigDecimal highValueThreshold;
@@ -62,7 +60,6 @@ public class WorkflowEngine {
             UserRepository userRepository,
             NotificationService notificationService,
             OutboxService outboxService,
-            AiAnalysisService aiAnalysisService,
             PurchaseOrderService purchaseOrderService,
             ObjectMapper objectMapper,
             @Value("${procura.workflow.high-value-threshold:50000.00}") BigDecimal highValueThreshold) {
@@ -75,7 +72,6 @@ public class WorkflowEngine {
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.outboxService = outboxService;
-        this.aiAnalysisService = aiAnalysisService;
         this.purchaseOrderService = purchaseOrderService;
         this.objectMapper = objectMapper;
         this.highValueThreshold = highValueThreshold;
@@ -127,11 +123,8 @@ public class WorkflowEngine {
                 null
         );
 
-        // Outbox event for AI service
+        // Outbox is the only AI trigger: it fires after commit and keeps retry semantics
         outboxService.publishEvent("PURCHASE_REQUEST", saved.getId(), "REQUEST_SUBMITTED", "{\"requestId\": \"" + saved.getId() + "\"}");
-
-        // Immediate async dispatch
-        aiAnalysisService.processRequestAnalysisAsync(saved.getId(), now);
 
         return saved;
     }
