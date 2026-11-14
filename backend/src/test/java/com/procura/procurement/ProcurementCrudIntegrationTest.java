@@ -196,4 +196,16 @@ class ProcurementCrudIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")));
     }
+
+    @Test
+    @DisplayName("POST /api/vendors enforces request constraints (blank name, bad email -> 400)")
+    void testCreateVendorValidation() throws Exception {
+        mockMvc.perform(post("/api/vendors")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\",\"email\":\"not-an-email\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")))
+                .andExpect(jsonPath("$.errors", hasSize(2)));
+    }
 }
