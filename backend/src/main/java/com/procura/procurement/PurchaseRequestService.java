@@ -1,5 +1,6 @@
 package com.procura.procurement;
 
+import com.procura.budget.BudgetService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.procura.ai.AiAnalysisEntity;
 import com.procura.ai.AiAnalysisRepository;
@@ -348,7 +349,7 @@ public class PurchaseRequestService {
                 .map(LineItemDto::fromEntity)
                 .toList();
 
-        Budget budget = budgetRepository.findByDepartmentIdAndFiscalYear(request.getDepartment().getId(), "2026-27").orElse(null);
+        Budget budget = budgetRepository.findByDepartmentIdAndFiscalYear(request.getDepartment().getId(), BudgetService.currentFiscalYear()).orElse(null);
         BudgetDto budgetDto = BudgetDto.fromEntity(budget);
 
         AiAnalysisEntity aiAnalysis = null;

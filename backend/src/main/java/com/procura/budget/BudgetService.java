@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +15,13 @@ import java.util.Optional;
 public class BudgetService {
 
     private final BudgetRepository budgetRepository;
+
+    /** Indian fiscal year (April to March) of today, e.g. "2026-27". */
+    public static String currentFiscalYear() {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        int start = today.getMonthValue() >= 4 ? today.getYear() : today.getYear() - 1;
+        return start + "-" + String.format("%02d", (start + 1) % 100);
+    }
 
     public BudgetService(BudgetRepository budgetRepository) {
         this.budgetRepository = budgetRepository;

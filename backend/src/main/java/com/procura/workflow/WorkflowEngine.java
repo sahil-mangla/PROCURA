@@ -100,7 +100,7 @@ public class WorkflowEngine {
         request.setAiStatus(AiStatus.PENDING);
 
         // Budget snapshot at submit time (D18)
-        Budget budget = budgetRepository.findByDepartmentIdAndFiscalYear(request.getDepartment().getId(), "2026-27").orElse(null);
+        Budget budget = budgetRepository.findByDepartmentIdAndFiscalYear(request.getDepartment().getId(), BudgetService.currentFiscalYear()).orElse(null);
         if (budget != null) {
             request.setBudgetTotalAtSubmit(budget.getTotal());
             request.setBudgetRemainingAtSubmit(budget.getRemaining());
@@ -220,7 +220,7 @@ public class WorkflowEngine {
             }
 
             // Reserve budget atomically
-            budgetService.reserveBudget(request.getDepartment().getId(), "2026-27", request.getAmount());
+            budgetService.reserveBudget(request.getDepartment().getId(), BudgetService.currentFiscalYear(), request.getAmount());
 
             request.setStatus(RequestStatus.FINANCE_APPROVED);
             PurchaseRequest saved = requestRepository.save(request);
@@ -382,7 +382,7 @@ public class WorkflowEngine {
 
         if (decision == HumanDecision.APPROVE) {
             // T9: HUMAN_REVIEW -> FINANCE_APPROVED
-            budgetService.reserveBudget(request.getDepartment().getId(), "2026-27", request.getAmount());
+            budgetService.reserveBudget(request.getDepartment().getId(), BudgetService.currentFiscalYear(), request.getAmount());
 
             request.setStatus(RequestStatus.FINANCE_APPROVED);
             PurchaseRequest saved = requestRepository.save(request);
@@ -476,7 +476,7 @@ public class WorkflowEngine {
         }
 
         // 3. Budget exceeded rule
-        Budget budget = budgetRepository.findByDepartmentIdAndFiscalYear(request.getDepartment().getId(), "2026-27").orElse(null);
+        Budget budget = budgetRepository.findByDepartmentIdAndFiscalYear(request.getDepartment().getId(), BudgetService.currentFiscalYear()).orElse(null);
         if (budget != null && request.getAmount() != null && request.getAmount().compareTo(budget.getRemaining()) > 0) {
             triggers.add(ReviewTriggerDto.rule("BUDGET_EXCEEDED", "Request amount exceeds department's remaining budget"));
         }
