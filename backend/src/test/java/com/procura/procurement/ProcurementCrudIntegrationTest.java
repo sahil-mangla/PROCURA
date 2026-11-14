@@ -180,5 +180,20 @@ class ProcurementCrudIntegrationTest extends BaseIntegrationTest {
                         .header("Authorization", "Bearer " + requesterToken))
                 .andExpect(status().isNotFound());
     }
-}
 
+    @Test
+    @DisplayName("Bad enum value or wrong param type returns 400 VALIDATION_FAILED, not 500")
+    void testMalformedInputReturns400() throws Exception {
+        mockMvc.perform(post("/api/purchase-requests")
+                        .header("Authorization", "Bearer " + requesterToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"x\",\"priority\":\"MEDIUM\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")));
+
+        mockMvc.perform(get("/api/purchase-requests?page=abc")
+                        .header("Authorization", "Bearer " + requesterToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")));
+    }
+}
