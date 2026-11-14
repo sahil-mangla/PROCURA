@@ -103,6 +103,11 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
             </Row>
             {request.neededBy && <Row label="Needed by">{date(request.neededBy)}</Row>}
             <Row label="Amount"><span className="text-base tnum">{inr(request.amount)}</span></Row>
+            {request.purchaseOrderId && (
+              <Row label="Purchase order">
+                <Link href={`/purchase-orders/${encodeURIComponent(request.purchaseOrderId)}`} className="tnum underline underline-offset-4">{request.purchaseOrderId}</Link>
+              </Row>
+            )}
             {request.description && (
               <Row label="Description"><span className="font-normal leading-relaxed">{request.description}</span></Row>
             )}
