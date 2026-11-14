@@ -117,6 +117,13 @@ export async function retryPurchaseOrder(requestId: string): Promise<ActionResul
   return { ok: true };
 }
 
+/** Marks one notification read. On failure it stays unread, which the page shows. */
+export async function markNotificationRead(id: number) {
+  const client = await api();
+  await attempt(() => client.POST("/notifications/{id}/read", { params: { path: { id } } }));
+  refresh();
+}
+
 export type FormState = { message?: string; fieldErrors?: Record<string, string> } | undefined;
 
 const CATEGORIES: Category[] = ["IT_EQUIPMENT", "SOFTWARE", "OFFICE_FURNITURE", "OFFICE_SUPPLIES", "SERVICES", "TRAVEL", "MAINTENANCE", "OTHER"];

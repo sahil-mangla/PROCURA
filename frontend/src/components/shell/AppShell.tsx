@@ -4,9 +4,9 @@ import { FileText, LayoutList } from "lucide-react";
 import { DashboardShell, type DashboardShellNavSection } from "./dashboard-shell";
 
 
-export type Section = "requests" | "reviews";
+export type Section = "requests" | "reviews" | "notifications" | "purchase-orders";
 
-const TITLES: Record<Section, string> = { requests: "Requests", reviews: "Needs review" };
+const TITLES: Record<Section, string> = { requests: "Requests", reviews: "Needs review", notifications: "Notifications", "purchase-orders": "Purchase order" };
 
 export function AppShell({
   section,

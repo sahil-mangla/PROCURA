@@ -76,6 +76,11 @@ const POOL = {
 const requests = new Map();
 const reviews = new Map();
 const orders = new Map();
+const notifications = [
+  { id: 1, userId: 1, event: "PO_GENERATED", requestId: "PR-1035", message: "PR-1035 was approved and its purchase order was issued.", read: false, createdAt: ago(70) },
+  { id: 2, userId: 1, event: "PO_GENERATION_FAILED", requestId: "PR-1037", message: "PR-1037 was approved, but the purchase order could not be generated yet.", read: false, createdAt: ago(79) },
+  { id: 3, userId: 1, event: "REQUEST_REJECTED", requestId: "PR-1038", message: "PR-1038 was rejected by the department head.", read: true, createdAt: ago(250) },
+];
 let nextHistoryId = 1;
 let nextAnalysisId = 1;
 let nextReviewId = 1;
@@ -545,6 +550,17 @@ async function handle(req, res) {
       decide(r, u, body.decision, comment, new Date().toISOString());
       return json(res, detail(r, u));
     }
+  }
+
+  if (method === "GET" && path === "/notifications") {
+    const mine = notifications.filter((n) => n.userId === u.id && (q.get("unreadOnly") !== "true" || !n.read)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return json(res, { ...page(mine.map((n) => ({ ...n, userId: undefined })), q), unreadCount: notifications.filter((n) => n.userId === u.id && !n.read).length });
+  }
+  if ((m = /^\/notifications\/(\d+)\/read$/.exec(path)) && method === "POST") {
+    const n = notifications.find((x) => x.id === Number(m[1]) && x.userId === u.id);
+    if (!n) return notFound(res);
+    n.read = true;
+    return send(res, 204);
   }
 
   if (method === "GET" && path === "/purchase-orders") return json(res, page([...orders.values()].filter((o) => canSee(requests.get(o.purchaseRequestId), u)), q));
