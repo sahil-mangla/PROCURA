@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { recordDecision, retryPurchaseOrder, submitRequest, type ActionResult } from "@/lib/actions";
+import { deleteRequest, recordDecision, retryPurchaseOrder, submitRequest, type ActionResult } from "@/lib/actions";
 import type { AllowedAction, HumanDecision, Problem, Recommendation, ReviewTrigger } from "@/lib/api/types";
 import { decisionLabel, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -53,7 +53,9 @@ export function DecisionPanel({ requestId, version, allowedActions, openReviewId
     : (["APPROVE", "REJECT", "REQUEST_INFORMATION"] as const).filter((d) => allowedActions.includes(d));
   const canSubmit = allowedActions.includes("SUBMIT");
   const canRetryPo = allowedActions.includes("RETRY_PO");
+  const canDelete = allowedActions.includes("DELETE");
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pick, setPick] = useState<HumanDecision | null>(null);
   const [reason, setReason] = useState("");
   const [recorded, setRecorded] = useState<{ decision: HumanDecision; reason: string; override: boolean } | null>(null);
@@ -136,10 +138,10 @@ export function DecisionPanel({ requestId, version, allowedActions, openReviewId
     return (
       <section id="decision-panel" tabIndex={-1} className="rounded-2xl border border-border/70 bg-card/85 outline-none" aria-labelledby="decision-h">
         <header className="border-b border-border px-5 py-3">
-          <h2 id="decision-h" className="text-base font-semibold">{canSubmit || canRetryPo ? "Your next step" : "Nothing for you to do"}</h2>
+          <h2 id="decision-h" className="text-base font-semibold">{canSubmit || canRetryPo || canDelete ? "Your next step" : "Nothing for you to do"}</h2>
           <p className="text-xs text-muted-foreground">{idleText}</p>
         </header>
-        {(canSubmit || canRetryPo || error) && (
+        {(canSubmit || canRetryPo || canDelete || error) && (
           <div className="space-y-3 px-5 py-4">
             {canSubmit && (
               <button type="button" disabled={pending} onClick={() => simple(() => submitRequest(requestId, version), { id: Date.now(), kind: "agree", title: "Submitted.", body: "The department head has been notified. AI analysis runs now." })}
@@ -151,6 +153,13 @@ export function DecisionPanel({ requestId, version, allowedActions, openReviewId
               <button type="button" disabled={pending} onClick={() => simple(() => retryPurchaseOrder(requestId), { id: Date.now(), kind: "agree", title: "Purchase order issued.", body: "The requester and finance have been notified." })}
                 className="w-full rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60">
                 {pending ? "Generating…" : "Retry purchase order"}
+              </button>
+            )}
+            {canDelete && (
+              // Second click confirms, so a stray click cannot destroy a draft.
+              <button type="button" disabled={pending} onClick={() => (confirmDelete ? startTransition(async () => handle(await deleteRequest(requestId), () => {})) : setConfirmDelete(true))}
+                className="w-full rounded-full border border-destructive/50 px-4 py-2.5 text-sm font-semibold text-destructive disabled:opacity-60">
+                {pending ? "Deleting…" : confirmDelete ? "Click again to delete this draft" : "Delete draft"}
               </button>
             )}
             {error && <ErrorText error={error} />}

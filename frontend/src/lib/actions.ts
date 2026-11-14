@@ -107,6 +107,15 @@ export async function submitRequest(requestId: string, version: number): Promise
   return { ok: true, request: result.data };
 }
 
+/** Deletes a draft, then leaves its page (the request no longer exists). */
+export async function deleteRequest(requestId: string): Promise<ActionResult> {
+  const client = await api();
+  const result = await attempt(() => client.DELETE("/purchase-requests/{id}", { params: { path: { id: requestId } } }));
+  if (!result) return { ok: false, problem: unreachable };
+  if (!result.response.ok) return { ok: false, problem: toProblem(result.error, result.response) };
+  redirect("/requests");
+}
+
 /** Retries purchase order generation after a failure (D14). */
 export async function retryPurchaseOrder(requestId: string): Promise<ActionResult> {
   const client = await api();
