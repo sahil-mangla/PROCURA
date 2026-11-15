@@ -30,7 +30,8 @@ public class OutboxService {
         outboxEventRepository.save(event);
     }
 
-    @Scheduled(fixedDelay = 3000)
+    // 1s poll: outbox is the only AI trigger, keep submit-to-analysis latency low
+    @Scheduled(fixedDelay = 1000)
     @Transactional
     public void processPendingEvents() {
         List<OutboxEvent> pending = outboxEventRepository.findByStatusOrderByCreatedAtAsc("PENDING", PageRequest.of(0, 20));

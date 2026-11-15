@@ -6,12 +6,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +42,15 @@ public class GlobalExceptionHandler {
         }
 
         ProblemResponse body = ProblemResponse.ofValidation("Fix the highlighted fields and try again.", errors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(PROBLEM_JSON)
+                .body(body);
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ProblemResponse> handleUnreadableInput(Exception ex) {
+        log.warn("Unreadable request input: {}", ex.getMessage());
+        ProblemResponse body = ProblemResponse.ofValidation("Request body or parameter is malformed or has an invalid value.", List.of());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .contentType(PROBLEM_JSON)
                 .body(body);

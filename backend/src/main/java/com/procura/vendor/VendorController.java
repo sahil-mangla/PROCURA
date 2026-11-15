@@ -1,6 +1,7 @@
 package com.procura.vendor;
 
 import com.procura.vendor.dto.VendorDto;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -37,7 +38,7 @@ public class VendorController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<VendorDto> createVendor(@RequestBody CreateVendorRequest request) {
+    public ResponseEntity<VendorDto> createVendor(@Valid @RequestBody CreateVendorRequest request) {
         VendorDto created = vendorService.createVendor(request.name(), request.email());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

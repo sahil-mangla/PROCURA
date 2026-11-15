@@ -1,5 +1,6 @@
 package com.procura.ai;
 
+import com.procura.budget.BudgetService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.procura.ai.client.AiClientModels;
 import com.procura.ai.client.AiRecommendationClient;
@@ -74,7 +75,7 @@ public class AiAnalysisService {
         }
 
         // Build input payload
-        Budget budget = budgetRepository.findByDepartmentIdAndFiscalYear(request.getDepartment().getId(), "2026-27").orElse(null);
+        Budget budget = budgetRepository.findByDepartmentIdAndFiscalYear(request.getDepartment().getId(), BudgetService.currentFiscalYear()).orElse(null);
         var itemInputs = request.getItems().stream()
                 .map(it -> new AiClientModels.AnalysisInput.ItemInput(it.getDescription(), it.getQuantity(), it.getUnitPrice()))
                 .toList();

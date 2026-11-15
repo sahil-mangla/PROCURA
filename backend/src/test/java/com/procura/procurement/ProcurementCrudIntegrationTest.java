@@ -180,5 +180,32 @@ class ProcurementCrudIntegrationTest extends BaseIntegrationTest {
                         .header("Authorization", "Bearer " + requesterToken))
                 .andExpect(status().isNotFound());
     }
-}
 
+    @Test
+    @DisplayName("Bad enum value or wrong param type returns 400 VALIDATION_FAILED, not 500")
+    void testMalformedInputReturns400() throws Exception {
+        mockMvc.perform(post("/api/purchase-requests")
+                        .header("Authorization", "Bearer " + requesterToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"x\",\"priority\":\"MEDIUM\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")));
+
+        mockMvc.perform(get("/api/purchase-requests?page=abc")
+                        .header("Authorization", "Bearer " + requesterToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")));
+    }
+
+    @Test
+    @DisplayName("POST /api/vendors enforces request constraints (blank name, bad email -> 400)")
+    void testCreateVendorValidation() throws Exception {
+        mockMvc.perform(post("/api/vendors")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\",\"email\":\"not-an-email\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")))
+                .andExpect(jsonPath("$.errors", hasSize(2)));
+    }
+}

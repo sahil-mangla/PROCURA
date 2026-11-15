@@ -2,8 +2,11 @@ package com.procura.workflow;
 
 import com.procura.BaseIntegrationTest;
 import com.procura.budget.Budget;
+import com.procura.ai.AiAnalysisRepository;
+import com.procura.audit.ApprovalHistoryRepository;
 import com.procura.budget.BudgetRepository;
 import com.procura.common.enums.Category;
+import com.procura.common.enums.HistoryEvent;
 import com.procura.common.enums.HumanDecision;
 import com.procura.common.enums.Priority;
 import com.procura.procurement.dto.LineItemDto;
@@ -34,6 +37,12 @@ class WorkflowTransitionsIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private BudgetRepository budgetRepository;
+
+    @Autowired
+    private AiAnalysisRepository aiAnalysisRepository;
+
+    @Autowired
+    private ApprovalHistoryRepository historyRepository;
 
     private Vendor vendor;
     private Budget budget;
@@ -235,5 +244,24 @@ class WorkflowTransitionsIntegrationTest extends BaseIntegrationTest {
                         .content(objectMapper.writeValueAsString(emptyReject)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")));
+    }
+
+    @Test
+    @DisplayName("Submit triggers exactly one AI analysis (no duplicate from immediate dispatch + outbox)")
+    void testSubmitRunsAiAnalysisOnce() throws Exception {
+        String prId = createRequest(new BigDecimal("15000.00"));
+
+        mockMvc.perform(post("/api/purchase-requests/" + prId + "/submit")
+                        .header("Authorization", "Bearer " + requesterToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ActionDtos.VersionedAction(0))))
+                .andExpect(status().isOk());
+
+        waitForAiAnalysis(prId);
+        Thread.sleep(3500); // a duplicate trigger would land within a few outbox polls
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, aiAnalysisRepository.findAllByRequestIdOrderByAnalysedAtDesc(prId).size());
+        org.junit.jupiter.api.Assertions.assertEquals(1, historyRepository.findAllByRequestIdOrderByCreatedAtAsc(prId).stream()
+                .filter(h -> h.getEvent() == HistoryEvent.AI_ANALYSIS_COMPLETED).count());
     }
 }
