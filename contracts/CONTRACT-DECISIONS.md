@@ -2,6 +2,8 @@
 
 **Status: PROPOSED, 2026-10-10.** Each item needs sign-off from the owners listed. Mark each one `ACCEPTED`, `CHANGED (to ...)` or `REJECTED` in the PR that adds this folder to `main`.
 
+**Implementation check, 2026-11-17.** Submitting a request through the running stack (frontend, Java backend, Python AI service, PostgreSQL) returned an analysis that matches these decisions as written: D1 (confidence `0.9674`, shown as 97%), D2 (`reviewThreshold` `0.8` echoed by the AI service), D3 (`recommendation: APPROVE`), D5 (reasons are `{ code, text, tone, evidenceIds }` objects), D6 (`reviewTriggers` present), D7 (evidence returned as full cases), D8 (`agentVersions` and `analysedAt` present) and D13 (`aiStatus` went `PENDING`, then `COMPLETED`, while submit returned immediately). This is a check of behaviour, **not owner sign-off**: the status above stays `PROPOSED` until each owner marks their decisions.
+
 Sources compared:
 - `01-backend-workflow-agent.md` (called "backend doc" below)
 - `02-ml-ai-agent.md` ("ML doc")
