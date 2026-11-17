@@ -61,8 +61,14 @@ public class AiAuditAndExportService {
             int page,
             int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<AiAnalysisEntity> analysisPage = aiAnalysisRepository.findAudits(modelVersion, from, to, pageable);
+        String model = modelVersion == null ? "" : modelVersion;
+        OffsetDateTime lower = from != null ? from : OffsetDateTime.parse("1970-01-01T00:00:00Z");
+        OffsetDateTime upper = to != null ? to : OffsetDateTime.parse("2200-01-01T00:00:00Z");
+
+        // The override flag lives on the human review, not the analysis, so it cannot be filtered in SQL.
+        // With that filter we load every match and page in memory so totalItems stays correct.
+        Pageable pageable = overrideFilter == null ? PageRequest.of(page, size) : Pageable.unpaged();
+        Page<AiAnalysisEntity> analysisPage = aiAnalysisRepository.findAudits(model, lower, upper, pageable);
 
         List<AiDecisionAuditDto> items = new ArrayList<>();
         for (AiAnalysisEntity entity : analysisPage.getContent()) {
@@ -91,6 +97,11 @@ public class AiAuditAndExportService {
             ));
         }
 
+        if (overrideFilter != null) {
+            int start = (int) Math.min((long) page * size, items.size());
+            int end = Math.min(start + size, items.size());
+            return PagedResponse.of(page, size, items.size(), new ArrayList<>(items.subList(start, end)));
+        }
         return PagedResponse.of(page, size, analysisPage.getTotalElements(), items);
     }
 

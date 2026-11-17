@@ -43,16 +43,19 @@ public class ComprehensiveWorkflowAndEndpointsTest extends BaseIntegrationTest {
                 return vendorRepository.save(v);
             });
         }
-        budgetRepository.findByDepartmentIdAndFiscalYear(engineeringDept.getId(), "2026-27").orElseGet(() -> {
+        // Reset every time: other test classes share this database and leave the budget partly spent,
+        // which turns a request into HUMAN_REVIEW (BUDGET_EXCEEDED) and fails the happy-path asserts.
+        var budget = budgetRepository.findByDepartmentIdAndFiscalYear(engineeringDept.getId(), "2026-27").orElseGet(() -> {
             var b = new com.procura.budget.Budget();
             b.setDepartment(engineeringDept);
             b.setFiscalYear("2026-27");
-            b.setTotal(new BigDecimal("1000000.00"));
-            b.setSpent(BigDecimal.ZERO);
-            b.setCommitted(BigDecimal.ZERO);
             b.setCurrency("INR");
-            return budgetRepository.save(b);
+            return b;
         });
+        budget.setTotal(new BigDecimal("1000000.00"));
+        budget.setSpent(BigDecimal.ZERO);
+        budget.setCommitted(BigDecimal.ZERO);
+        budgetRepository.save(budget);
     }
 
     private String createDraft(BigDecimal amount) throws Exception {

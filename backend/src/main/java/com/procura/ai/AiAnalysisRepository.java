@@ -18,10 +18,12 @@ public interface AiAnalysisRepository extends JpaRepository<AiAnalysisEntity, Lo
 
     Optional<AiAnalysisEntity> findFirstByRequestIdOrderByAnalysedAtDesc(String requestId);
 
+    // No "param IS NULL" tests: PostgreSQL cannot infer the type of an untyped null parameter
+    // ("could not determine data type of parameter"). Callers pass "" and wide bounds instead.
     @Query("SELECT a FROM AiAnalysisEntity a WHERE " +
-           "(:modelVersion IS NULL OR a.modelVersion = :modelVersion) AND " +
-           "(:fromTime IS NULL OR a.analysedAt >= :fromTime) AND " +
-           "(:toTime IS NULL OR a.analysedAt <= :toTime) " +
+           "(:modelVersion = '' OR a.modelVersion = :modelVersion) AND " +
+           "a.analysedAt >= :fromTime AND " +
+           "a.analysedAt <= :toTime " +
            "ORDER BY a.analysedAt DESC")
     Page<AiAnalysisEntity> findAudits(
             @Param("modelVersion") String modelVersion,
