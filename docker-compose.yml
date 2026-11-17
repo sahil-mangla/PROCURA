@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: procura
       POSTGRES_PASSWORD: procura_dev_password
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - procura_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +16,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: procura-ai-service
+    restart: unless-stopped
+    environment:
+      SERVICE_KEY: procura-internal-service-key-2026
+      BACKEND_BASE_URL: http://backend:8080/api
+    ports:
+      - "8000:8000"
 
   backend:
     build:
@@ -25,6 +37,8 @@ services:
     restart: unless-stopped
     depends_on:
       postgres:
+        condition: service_healthy
+      ai-service:
         condition: service_healthy
     environment:
       DB_HOST: postgres

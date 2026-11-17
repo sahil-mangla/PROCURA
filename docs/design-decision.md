@@ -54,9 +54,10 @@ Next.js, TypeScript, REST. Tailwind v4, Radix primitives, shadcn conventions.
 | Animated numbers | `@number-flow/react` 0.6 | MIT |
 | List add/remove | `@formkit/auto-animate` | MIT |
 | Components | ObsidianUI (`src/components/ui`, `block`) and Rewamp UI (`src/components/rewamp`, adapted, MIT) | MIT |
+| Hand-drawn highlight | `rough-notation` via Magic UI `Highlighter` (`frontend/src/components/motion/Highlighter.tsx`, adapted) | MIT |
 | Icons | `lucide-react` | ISC |
 
-Attribution is in each adapted file's header. `OBSIDIANUI-LICENSE.txt` is kept in `mockups/src/components/`. The Rewamp CLI wrote demo wrappers, not reusable components, so each effect was extracted into a props-driven component.
+Attribution is in each adapted file's header. Magic UI was reviewed in full; only `Highlighter` is used (the override mark on the receipt). The rest was left out because it animates continuously or is decorative, against interaction rule 4, or duplicates what the stack already has. The Animated Theme Toggler is worth revisiting if a dark theme is added. `OBSIDIANUI-LICENSE.txt` is kept in `mockups/src/components/`. The Rewamp CLI wrote demo wrappers, not reusable components, so each effect was extracted into a props-driven component.
 
 ## 4. Tokens
 
