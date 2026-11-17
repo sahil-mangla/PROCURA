@@ -150,10 +150,12 @@ The database migration `V2__seed_data.sql` pre-loads the following standard acco
 
 | Email | Role | Department | Description |
 |---|---|---|---|
-| `alice.requester@procura.local` | `REQUESTER` | Engineering | Standard requester |
-| `bob.depthead@procura.local` | `DEPARTMENT_HEAD` | Engineering | Head of Engineering |
-| `carol.finance@procura.local` | `FINANCE_MANAGER` | Finance | Finance manager & review approver |
-| `dave.admin@procura.local` | `ADMIN` | Corporate IT | System administrator |
+| `requester@procura.local` | `REQUESTER` | Engineering | Standard requester (Alice Walker) |
+| `depthead@procura.local` | `DEPARTMENT_HEAD` | Engineering | Head of Engineering |
+| `finance@procura.local` | `FINANCE_MANAGER` | Finance | Finance manager & review approver |
+| `admin@procura.local` | `ADMIN` | Corporate IT | System administrator |
+| `marketing.req@procura.local` | `REQUESTER` | Marketing | Marketing requester |
+| `marketing.head@procura.local` | `DEPARTMENT_HEAD` | Marketing | Head of Marketing |
 
 ---
 

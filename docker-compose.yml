@@ -49,6 +49,7 @@ services:
       JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
       AI_SERVICE_URL: http://ai-service:8000
       AI_SERVICE_KEY: procura-internal-service-key-2026
+      AI_MOCK_ENABLED: "false"
     ports:
       - "8080:8080"
 
