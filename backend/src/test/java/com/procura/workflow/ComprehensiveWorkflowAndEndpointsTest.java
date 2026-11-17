@@ -287,4 +287,35 @@ public class ComprehensiveWorkflowAndEndpointsTest extends BaseIntegrationTest {
                     .andExpect(status().isNoContent());
         }
     }
+
+    @Test
+    @DisplayName("needsMyAction filters in the query: totalItems and page size reflect only actionable requests")
+    void testNeedsMyActionPaging() throws Exception {
+        String draftId = createDraft(new BigDecimal("1000.00"));
+        String submittedId = createDraft(new BigDecimal("2000.00"));
+        mockMvc.perform(post("/api/purchase-requests/" + submittedId + "/submit")
+                        .header("Authorization", "Bearer " + requesterToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ActionDtos.VersionedAction(0))))
+                .andExpect(status().isOk());
+
+        var all = objectMapper.readTree(mockMvc.perform(get("/api/purchase-requests?needsMyAction=true&size=1000")
+                        .header("Authorization", "Bearer " + requesterToken))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        List<String> ids = new java.util.ArrayList<>();
+        all.get("items").forEach(i -> {
+            ids.add(i.get("id").asText());
+            org.junit.jupiter.api.Assertions.assertTrue(List.of("DRAFT", "INFO_REQUESTED").contains(i.get("status").asText()));
+        });
+        org.junit.jupiter.api.Assertions.assertTrue(ids.contains(draftId));
+        org.junit.jupiter.api.Assertions.assertFalse(ids.contains(submittedId));
+        org.junit.jupiter.api.Assertions.assertEquals(ids.size(), all.get("totalItems").asInt());
+
+        // a short page must still be full and report the filtered total
+        var paged = objectMapper.readTree(mockMvc.perform(get("/api/purchase-requests?needsMyAction=true&size=1")
+                        .header("Authorization", "Bearer " + requesterToken))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        org.junit.jupiter.api.Assertions.assertEquals(1, paged.get("items").size());
+        org.junit.jupiter.api.Assertions.assertEquals(ids.size(), paged.get("totalItems").asInt());
+    }
 }

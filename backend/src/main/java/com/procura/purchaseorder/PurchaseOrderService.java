@@ -113,7 +113,7 @@ public class PurchaseOrderService {
             purchaseRequestRepository.save(request);
 
             // Update budget (committed -> spent)
-            budgetService.recordPurchaseOrderIssued(request.getDepartment().getId(), "2026-27", request.getAmount());
+            budgetService.recordPurchaseOrderIssued(request.getDepartment().getId(), BudgetService.currentFiscalYear(), request.getAmount());
 
             // Update vendor stats
             Vendor vendor = request.getVendor();
