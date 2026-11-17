@@ -1,12 +1,12 @@
 "use client";
 
-import { FileText, LayoutList } from "lucide-react";
+import { Bot, FileText, LayoutList } from "lucide-react";
 import { DashboardShell, type DashboardShellNavSection } from "./dashboard-shell";
 
 
-export type Section = "requests" | "reviews" | "notifications" | "purchase-orders";
+export type Section = "requests" | "reviews" | "notifications" | "purchase-orders" | "ai";
 
-const TITLES: Record<Section, string> = { requests: "Requests", reviews: "Needs review", notifications: "Notifications", "purchase-orders": "Purchase order" };
+const TITLES: Record<Section, string> = { requests: "Requests", reviews: "Needs review", notifications: "Notifications", "purchase-orders": "Purchase order", ai: "AI oversight" };
 
 export function AppShell({
   section,
@@ -27,6 +27,11 @@ export function AppShell({
         { id: "requests", label: "Requests", icon: FileText, href: "/requests" },
         { id: "reviews", label: "Needs review", icon: LayoutList, href: "/reviews", count: reviewCount },
       ],
+    },
+    {
+      id: "insight",
+      title: "Insight",
+      items: [{ id: "ai", label: "AI oversight", icon: Bot, href: "/ai" }],
     },
   ];
 
